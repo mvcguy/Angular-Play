@@ -1,1 +1,36 @@
-<p>chat works indeed!</p>
+<h3>Search users</h3>
+
+<form name="userSearchForm" class="form-inline" (ngSubmit)="OnSubmit()" #searchForm="ngForm">
+    
+    <label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
+    <div class="input-group mb-2 mr-sm-4">
+      <div class="input-group-prepend">
+        <div class="input-group-text">@</div>
+      </div>
+      <input [(ngModel)]="pageModel.txtUserSearchQuery" name="txtUserSearchQuery" type="text" 
+      class="form-control" placeholder="Username">
+    </div>
+  
+    <button type="button" class="btn btn-primary mb-2" (click)="SearchUser()">Search</button>
+  </form>
+
+  <div>
+    <h3>Total {{ pageModel.searchResults?.length || '0' }} records were found for '{{ pageModel.txtUserSearchQuery }}'</h3>
+  </div>
+
+  <table class='table table-striped' aria-labelledby="tableLabel" *ngIf="pageModel.searchResults">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Full Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of pageModel.searchResults">
+        <td>{{ item.userName }}</td>
+        <td>{{ item.email }}</td>
+        <td>{{ item.name }}</td>
+      </tr>
+    </tbody>
+  </table>

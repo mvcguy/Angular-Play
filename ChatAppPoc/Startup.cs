@@ -33,9 +33,11 @@ namespace ChatAppPoc
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddScoped<ChatUsersRepository>();
+
             services.AddDatabaseDeveloperPageExceptionFilter();
 
-            services.AddTransient<IReturnUrlParser, IdentityServer.Local.ReturnUrlParser>();
+            //services.AddTransient<IReturnUrlParser, IdentityServer.Local.ReturnUrlParser>();
 
             services.AddDefaultIdentity<ApplicationUser>(options =>
             {
