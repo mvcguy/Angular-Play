@@ -29,5 +29,20 @@ namespace ChatAppPoc.Data
             }
             
         }
+
+        internal async IAsyncEnumerable<ChatUserVm> GetUsers()
+        {
+            var task = Task.Run(() =>
+            {
+                var items = dbContext.Users.Take(10);
+                return items.Select(x => x.ToChatUserVm());
+            });
+
+            var result = await task;
+            foreach (var item in result)
+            {
+                yield return item;
+            }
+        }
     }
 }

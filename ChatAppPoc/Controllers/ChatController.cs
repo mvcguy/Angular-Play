@@ -33,5 +33,18 @@ namespace ChatAppPoc.Controllers
             }            
         }
 
+        [HttpGet("userlist")]
+        public async IAsyncEnumerable<ChatUserVm> Userlist()
+        {
+            //
+            // returns TOP 10 users for now
+            //
+
+            await foreach(var item in repository.GetUsers())
+            {
+                yield return item;
+            }
+        }
+
     }
 }

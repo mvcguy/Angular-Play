@@ -1,0 +1,49 @@
+.error{
+    color:red;
+    font-size: 13pt;
+    font-weight:bold;
+}
+
+.hide{
+    display: none;
+}
+
+.chat-history{
+    height: 300px;
+    width: 100%;
+    border: 1px black solid;
+    overflow-y: scroll;
+}
+
+.chat-text-box{
+    width: 90%;
+    height: 50px;
+    margin-top: 2px;
+}
+
+.chat-send-btn{
+    width: 10%;
+    height: 50px;
+    margin-top: 2px;
+}
+
+.chat-window{
+    margin: 20px;
+}
+
+.chat-user-name{
+    font-size: 9pt;
+    font-weight: bold;
+    color: darkslategray;
+}
+.chat-time-stamp{
+    font-size:7pt;
+    color:gray;
+}
+
+.chat-message{
+    font-size: 9pt;
+    color: darkslategray;
+    font-weight: bold;
+    word-wrap: break-word;
+}

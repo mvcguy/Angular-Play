@@ -12,7 +12,9 @@ import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { ApiAuthorizationModule } from 'src/api-authorization/api-authorization.module';
 import { AuthorizeGuard } from 'src/api-authorization/authorize.guard';
 import { AuthorizeInterceptor } from 'src/api-authorization/authorize.interceptor';
-import { ChatComponent } from './chat/chat.component';
+import { UserSearchComponent } from './chat/UserSearch/user.search.component';
+import { UserConversationComponent } from './chat/UserConversation/user.conversation.component';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
   declarations: [
@@ -21,18 +23,21 @@ import { ChatComponent } from './chat/chat.component';
     HomeComponent,
     CounterComponent,
     FetchDataComponent,
-    ChatComponent
+    UserSearchComponent,
+    UserConversationComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     HttpClientModule,
     FormsModule,
     ApiAuthorizationModule,
+    CommonModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'counter', component: CounterComponent },
       { path: 'fetch-data', component: FetchDataComponent, canActivate: [AuthorizeGuard] },
-      { path: 'chat', component: ChatComponent }
+      { path: 'chat', component: UserSearchComponent },
+      { path: 'chat/userConversation/:userName', component: UserConversationComponent }
     ])
   ],
   providers: [

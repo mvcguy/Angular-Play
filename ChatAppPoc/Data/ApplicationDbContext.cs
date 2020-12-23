@@ -24,6 +24,8 @@ namespace ChatAppPoc.Data
 
         public string Email { get; set; }
 
+        public string Phone { get; set; }
+
         
 
     }
@@ -35,7 +37,8 @@ namespace ChatAppPoc.Data
             return new ChatUserVm
             {
                 UserName = applicationUser.UserName,
-                Email = applicationUser.Email
+                Email = applicationUser.Email,
+                Phone = applicationUser.PhoneNumber
             };
         }
     }
