@@ -56,15 +56,19 @@ namespace ChatAppPoc.Data
 
         internal async Task SaveMessage(ChatMessageVm message)
         {
-            dbContext.ChatMessages.Add(message.ToDbMessage());
+            var dbMessage = message.ToDbMessage();
+            dbContext.ChatMessages.Add(dbMessage);
             await dbContext.SaveChangesAsync();
+            message.Index = dbMessage.Id;
         }
 
         internal async IAsyncEnumerable<ChatMessageVm> GetMessageHistory(string fromUser, string toUser)
         {
             var result = await Task.Run(() =>
             {
-                return dbContext.ChatMessages.Where(x => x.FromUser == fromUser && x.ToUser == toUser).ToList();
+                return dbContext.ChatMessages
+                .Where(x => (x.FromUser == fromUser && x.ToUser == toUser) 
+                || (x.ToUser == fromUser && x.FromUser == toUser)).ToList();
             });
 
             foreach (var item in result)

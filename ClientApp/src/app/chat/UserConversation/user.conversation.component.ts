@@ -4,6 +4,9 @@ import { ActivatedRoute } from "@angular/router";
 import { from, Observable, of } from "rxjs";
 import { filter, first, map, take } from "rxjs/operators";
 import { AuthorizeService } from "src/api-authorization/authorize.service";
+import { SignalRChatModel, SignalRChatProps } from "src/app/services/signalr.chat.model";
+import { SignalRService } from "src/app/services/signalr.service";
+import { ChatMessage } from "./ChatMessage";
 
 @Component({
     selector: 'app-chat-user-conversation',
@@ -27,6 +30,7 @@ export class UserConversationComponent implements OnInit {
     constructor(private authService: AuthorizeService
         , private activatedRoute: ActivatedRoute
         , @Inject('API_URL') private apiUrl: string
+        , private signalRService: SignalRService
         , private http: HttpClient) {
 
         this.currentMessage = new ChatMessage();
@@ -39,14 +43,36 @@ export class UserConversationComponent implements OnInit {
     ngOnInit() {
         this.chatHistory = of(this.chatHistorySource);
         this.getCurrentUser();
+        this.subscribeToSignalREvents();
+    }
+    subscribeToSignalREvents() {
+        this.signalRService.signalEmitter
+            .subscribe((data: SignalRChatModel) => this.onNewChatMessageArrived(data));
     }
 
+    onNewChatMessageArrived(data: SignalRChatModel) {        
+        var message: ChatMessage = {
+            message: data.body,
+            fromUser: data.props.FromUser,
+            index: data.props.Index,
+            toUser: data.props.ToUser,
+            timestamp: data.props.Timestamp
+        };
+        this.chatHistorySource.push(message);
+        console.log("SignalR: Data is received by the component. Data: ", message);        
+        this.chatIsScrolledToView = false;
+    }
 
     ngAfterViewChecked() {
 
         if (!this.chatIsScrolledToView) {
             this.scrollChatToView();
         }
+    }
+
+    public RefreshChat() {
+        this.historyFetched = false;
+        this.GetChatHistory();
     }
 
     private GetChatHistory() {
@@ -68,7 +94,13 @@ export class UserConversationComponent implements OnInit {
         console.log(error);
     }
     OnChatHistoryReceived(result: ChatMessage[]): void {
-        this.chatHistorySource = [...this.chatHistorySource, ...result];
+
+        //
+        // TODO: only append new history items
+        //
+
+        // this.chatHistorySource = [...this.chatHistorySource, ...result];
+        this.chatHistorySource = [...result];
         this.chatHistory = of(this.chatHistorySource);
         this.chatIsScrolledToView = false;
     }
@@ -85,7 +117,11 @@ export class UserConversationComponent implements OnInit {
         this.currentMessage.index = this.messageSeq++;
         this.currentMessage.timestamp = new Date().toLocaleTimeString();
         this.currentMessage.toUser = this.opponentUserName;
-        this.chatHistorySource.push(this.currentMessage);
+
+        //
+        // do not push to the history, lets wait for the signalR signal from server
+        //
+        //this.chatHistorySource.push(this.currentMessage);
 
         this.http.post(this.apiUrl + '/chat/sendmessage', this.currentMessage)
             .subscribe(
@@ -95,7 +131,6 @@ export class UserConversationComponent implements OnInit {
 
         // re-new current  message
         this.currentMessage = new ChatMessage();
-        this.chatIsScrolledToView = false;
     }
     OnSendMessageError(error: any): void {
         console.log(error);
@@ -110,10 +145,3 @@ export class UserConversationComponent implements OnInit {
     }
 }
 
-export class ChatMessage {
-    fromUser?: string;
-    toUser?: string;
-    message?: string;
-    timestamp?: string;
-    index?: number;
-}

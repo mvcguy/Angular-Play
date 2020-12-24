@@ -1,5 +1,7 @@
 ﻿using ChatAppPoc.Data;
+using ChatAppPoc.SignalArServices;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Text.Encodings.Web;
@@ -14,7 +16,8 @@ namespace ChatAppPoc.Controllers
         private readonly ChatUsersRepository repository;
         private readonly MessageSender messageSender;
 
-        public ChatController(ChatUsersRepository repository, MessageSender messageSender)
+        public ChatController(ChatUsersRepository repository
+            , MessageSender messageSender)
         {
             this.repository = repository;
             this.messageSender = messageSender;
@@ -67,6 +70,8 @@ namespace ChatAppPoc.Controllers
         [HttpGet("messagehistory")]
         public async IAsyncEnumerable<ChatMessageVm> MessageHistory(string currentUser, string opponentUser)
         {
+
+            // TODO: refactor the "bad-ugly-design" of currentUser and opponentUser
 
             var result = repository.GetMessageHistory(currentUser, opponentUser);
 
@@ -135,9 +140,18 @@ namespace ChatAppPoc.Controllers
 
     public class MessageSender
     {
+        private readonly IHubContext<ChatHub> hubContext;
+
+        public MessageSender(IHubContext<ChatHub> hubContext)
+        {
+            this.hubContext = hubContext;
+        }
         public async Task SendMessage(PublicMessage message)
         {
-            var task = Task.Run(() => { });
+            var task = Task.Run(() =>
+            {
+                hubContext.Clients.All.SendAsync("ClientSideMethod", message);
+            });
             await task;
         }
     }

@@ -1,7 +1,7 @@
 using ChatAppPoc.Controllers;
 using ChatAppPoc.Data;
 using ChatAppPoc.Models;
-using IdentityServer4.Services;
+using ChatAppPoc.SignalArServices;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -70,6 +70,8 @@ namespace ChatAppPoc
 
             UpdateJwtOptions(services);
 
+            services.AddSignalR();
+
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -102,6 +104,8 @@ namespace ChatAppPoc
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
+
+                endpoints.MapHub<ChatHub>("/chathub");
             });
 
             app.Use(SayHello);
@@ -143,6 +147,7 @@ namespace ChatAppPoc
 
                     options.Events.OnTokenValidated = async context =>
                     {
+                        // call the base
                         await onTokenValidated(context);
 
 
@@ -158,6 +163,7 @@ namespace ChatAppPoc
 
                     options.Events.OnAuthenticationFailed = async context =>
                     {
+                        // call the base event
                         await error(context);
 
                         Debug.WriteLine($"Error has occurred. Error: {context.Exception?.Message}", "IDS4");

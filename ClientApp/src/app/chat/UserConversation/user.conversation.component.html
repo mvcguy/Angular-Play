@@ -1,4 +1,7 @@
-<h6>Conversation between you [{{currentUser}}] and {{opponentUserName}}</h6>
+<div>
+    <h4>{{opponentUserName}}</h4>
+</div>
+<div><a class="btn btn-default" (click)="RefreshChat()">Refresh</a></div>
 
 <div *ngIf="!(isAuthenticated | async)">
     <span class="error">You must login to continue using the chat !</span>
