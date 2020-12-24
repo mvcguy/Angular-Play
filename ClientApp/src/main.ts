@@ -9,7 +9,7 @@ export function getBaseUrl() {
 }
 
 export function getApiUrl() {
-  return 'https://localhost:44365';
+  return 'https://localhost/chatpoc';
 }
 
 const providers = [

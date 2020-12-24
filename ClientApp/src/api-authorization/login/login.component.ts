@@ -88,7 +88,7 @@ export class LoginComponent implements OnInit {
 
   private redirectToRegister(): any {
     this.redirectToApiAuthorizationPath(
-      `${this.apiUrl}${ApplicationPaths.IdentityRegisterPath}?returnUrl=${encodeURI('/home/returnregister')}`);
+      `${this.apiUrl}${ApplicationPaths.IdentityRegisterPath}?returnUrl=${encodeURI('~/home/returnregister')}`);
   }
 
   private redirectToProfile(): void {

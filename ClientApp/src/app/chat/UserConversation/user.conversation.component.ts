@@ -1,4 +1,5 @@
-import { Component, OnInit } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Component, Inject, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { from, Observable, of } from "rxjs";
 import { first, map } from "rxjs/operators";
@@ -15,37 +16,37 @@ export class UserConversationComponent implements OnInit {
 
     public isAuthenticated: Observable<boolean>;
     public currentUser: Observable<string>;
-    public choosenUserName: string;
+    public opponentUserName: string;
     public chatHistory: Observable<ChatMessage[]>;
+    public chatHistorySource: ChatMessage[];
     public currentMessage: ChatMessage;
-    fakeChatHistory: ChatMessage[];
     public messageSeq: number = 1;
+    public chatIsScrolledToView: boolean = false;
 
     constructor(private authService: AuthorizeService
-        , private activatedRoute: ActivatedRoute,) {
+        , private activatedRoute: ActivatedRoute
+        , @Inject('API_URL') private apiUrl: string
+        , private http: HttpClient) {
+
         this.currentMessage = new ChatMessage();
         this.isAuthenticated = this.authService.isAuthenticated();
         this.currentUser = this.authService.getUser().pipe(map(u => u && u.name));
-        this.choosenUserName = this.activatedRoute.snapshot.paramMap.get('userName');
-
-        this.fakeChatHistory = [
-            { userName: "Shahid Ali", message: 'Assalam O Alaikum', timestamp: '09:15 AM', index: this.messageSeq++ },
-            { userName: "Shahid Ali", message: 'How are you doing today?', timestamp: '10:30 AM', index: this.messageSeq++ },
-            {
-                userName: "Shahid Ali",
-                message: 'Have you read some topics about angular 11 yet? Use <a>s or <button>s to create actionable list group items with hover, disabled, and active states by adding .list-group-item-action. We separate these pseudo-classes to ensure list groups made of non-interactive elements (like <li>s or <div>s) don’t provide a click or tap affordance.',
-                timestamp: '11:27 PM', index: this.messageSeq++
-            }
-        ];
-
+        this.opponentUserName = this.activatedRoute.snapshot.paramMap.get('userName');
+        this.chatHistorySource = [];
     }
 
     ngOnInit() {
-
-        this.chatHistory = of(this.fakeChatHistory);
+        this.chatHistory = of(this.chatHistorySource);
 
     }
 
+    ngAfterViewChecked() {
+        if (!this.chatIsScrolledToView) {
+            this.scrollChatToView();
+            this.chatIsScrolledToView = true;
+        }
+
+    }
     getCurrentUser(): string {
         let returnVlaue: string = ''
         this.currentUser.subscribe(x => { returnVlaue = x });
@@ -54,22 +55,37 @@ export class UserConversationComponent implements OnInit {
     }
 
     public sendMessage() {
-        this.currentMessage.userName = "Shahid Ali";
+        this.currentMessage.fromUser = this.getCurrentUser();
         this.currentMessage.index = this.messageSeq++;
         this.currentMessage.timestamp = new Date().toLocaleTimeString();
-        this.fakeChatHistory.push(this.currentMessage);
+        this.currentMessage.toUser = this.opponentUserName;
+        this.chatHistorySource.push(this.currentMessage);
+
+        this.http.post(this.apiUrl + '/chat/sendmessage', this.currentMessage)
+            .subscribe(
+                result => this.OnSendMessageResult(result),
+                error => this.OnSendMessageError(error)
+            );
+
+        // re-new current  message
         this.currentMessage = new ChatMessage();
-        debugger;
-        this.scrollToElement('item-' + (this.messageSeq - 2));
+        this.chatIsScrolledToView = false;
+    }
+    OnSendMessageError(error: any): void {
+        console.log(error);
+    }
+    OnSendMessageResult(result: Object): void {
+        console.log(result);
     }
 
-    scrollToElement(elementId: string) {
-        document.getElementById(elementId).scrollIntoView();
+    scrollChatToView() {
+        document.getElementById('chat_eof').scrollIntoView();
     }
 }
 
 export class ChatMessage {
-    userName?: string;
+    fromUser?: string;
+    toUser?: string;
     message?: string;
     timestamp?: string;
     index?: number;

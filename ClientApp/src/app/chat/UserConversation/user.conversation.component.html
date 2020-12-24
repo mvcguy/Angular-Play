@@ -1,4 +1,4 @@
-<h6>Conversation between you [{{currentUser | async}}] and {{choosenUserName}}</h6>
+<h6>Conversation between you [{{currentUser | async}}] and {{opponentUserName}}</h6>
 
 <div *ngIf="!(isAuthenticated | async)">
     <span class="error">You must login to continue using the chat !</span>
@@ -6,11 +6,11 @@
 
 <div class="chat-window">
     <div>
-        <div class="chat-history">
+        <div class="chat-history" id="chatHistory">
             <ul class="list-group">
                 <li class="list-group-item" *ngFor="let item of chatHistory | async" id="item-{{item.index}}">
                     <div>
-                        <span class="chat-user-name">{{ item.userName }} </span>
+                        <span class="chat-user-name">{{ item.fromUser }} </span>
                         <span class="chat-time-stamp">{{ item.timestamp }}</span>
                     </div>
                     <div class="chat-message">
@@ -18,11 +18,11 @@
                     </div>
                 </li>
             </ul>
+            <div style="visibility: hidden;" id="chat_eof"></div>
         </div>
         <div>
             <input autocomplete="off" type="text" class="chat-text-box" name="txtNewMessage"
-             [(ngModel)]="currentMessage.message"
-             (keydown.enter) = "sendMessage()" />
+                [(ngModel)]="currentMessage.message" (keydown.enter)="sendMessage()" />
             <input type="button" value="Send" class="chat-send-btn" (click)="sendMessage()" />
         </div>
     </div>

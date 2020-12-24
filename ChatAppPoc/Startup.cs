@@ -1,3 +1,4 @@
+using ChatAppPoc.Controllers;
 using ChatAppPoc.Data;
 using ChatAppPoc.Models;
 using IdentityServer4.Services;
@@ -34,6 +35,7 @@ namespace ChatAppPoc
                     Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<ChatUsersRepository>();
+            services.AddSingleton<MessageSender>();
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -41,7 +43,7 @@ namespace ChatAppPoc
 
             services.AddDefaultIdentity<ApplicationUser>(options =>
             {
-                options.SignIn.RequireConfirmedAccount = true;
+                options.SignIn.RequireConfirmedAccount = false;
             }).AddEntityFrameworkStores<ApplicationDbContext>();
 
 
@@ -54,7 +56,7 @@ namespace ChatAppPoc
             services.AddIdentityServer(options =>
             {
                 options.Cors.CorsPolicyName = corsdef;
-                options.UserInteraction.ErrorUrl = "/home/error";                
+                options.UserInteraction.ErrorUrl = "/home/error";
 
             }).AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
@@ -80,17 +82,17 @@ namespace ChatAppPoc
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //if (env.IsDevelopment())
-            //{
-            //    app.UseDeveloperExceptionPage();
-            //    app.UseMigrationsEndPoint();
-            //}
-            //else
-            //{
-            //    app.UseExceptionHandler("/Error");
-            //    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            //    app.UseHsts();
-            //}
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseMigrationsEndPoint();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
 
             app.UseDeveloperExceptionPage();
 

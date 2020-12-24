@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChatAppPoc.Controllers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,8 +35,16 @@ namespace ChatAppPoc.Data
         {
             var task = Task.Run(() =>
             {
-                var items = dbContext.Users.Take(10);
-                return items.Select(x => x.ToChatUserVm());
+                try
+                {
+                    var items = dbContext.Users.OrderBy(x=>x.Email).Take(10);
+                    return items.Select(x => x.ToChatUserVm()).ToList();
+                }
+                catch (Exception e)
+                {
+
+                    throw;
+                }
             });
 
             var result = await task;
@@ -43,6 +52,12 @@ namespace ChatAppPoc.Data
             {
                 yield return item;
             }
+        }
+
+        internal async Task SaveMessage(ChatMessageVm message)
+        {
+            dbContext.ChatMessages.Add(message.ToDbMessage());
+            await dbContext.SaveChangesAsync();
         }
     }
 }

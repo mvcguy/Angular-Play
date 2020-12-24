@@ -2,8 +2,6 @@ export const ApplicationName = 'ChatAppPoc';
 
 export const ReturnUrlType = 'returnUrl';
 
-export const API_SERVER = 'https://localhost:44365';
-
 export const QueryParameterNames = {
   ReturnUrl: ReturnUrlType,
   Message: 'message'
