@@ -28,7 +28,7 @@ namespace ChatAppPoc.Data
             {
                 yield return item;
             }
-            
+
         }
 
         internal async IAsyncEnumerable<ChatUserVm> GetUsers()
@@ -37,7 +37,7 @@ namespace ChatAppPoc.Data
             {
                 try
                 {
-                    var items = dbContext.Users.OrderBy(x=>x.Email).Take(10);
+                    var items = dbContext.Users.OrderBy(x => x.Email).Take(10);
                     return items.Select(x => x.ToChatUserVm()).ToList();
                 }
                 catch (Exception e)
@@ -58,6 +58,20 @@ namespace ChatAppPoc.Data
         {
             dbContext.ChatMessages.Add(message.ToDbMessage());
             await dbContext.SaveChangesAsync();
+        }
+
+        internal async IAsyncEnumerable<ChatMessageVm> GetMessageHistory(string fromUser, string toUser)
+        {
+            var result = await Task.Run(() =>
+            {
+                return dbContext.ChatMessages.Where(x => x.FromUser == fromUser && x.ToUser == toUser).ToList();
+            });
+
+            foreach (var item in result)
+            {
+                yield return item.ToChatMessageVm();
+            }
+
         }
     }
 }

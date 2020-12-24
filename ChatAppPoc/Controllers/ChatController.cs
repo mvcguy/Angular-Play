@@ -52,7 +52,10 @@ namespace ChatAppPoc.Controllers
         [HttpPost("sendmessage")]
         public async Task<IActionResult> SendMessage([FromBody] ChatMessageVm message)
         {
-            if (message == null || string.IsNullOrWhiteSpace(message.Message)) return BadRequest();
+            if (message == null || string.IsNullOrWhiteSpace(message.Message)
+                || string.IsNullOrWhiteSpace(message.FromUser)
+                || string.IsNullOrWhiteSpace(message.ToUser)
+                ) return BadRequest();
 
             await repository.SaveMessage(message);
 
@@ -62,12 +65,15 @@ namespace ChatAppPoc.Controllers
         }
 
         [HttpGet("messagehistory")]
-        public async Task<IActionResult> MessageHistory()
+        public async IAsyncEnumerable<ChatMessageVm> MessageHistory(string currentUser, string opponentUser)
         {
 
+            var result = repository.GetMessageHistory(currentUser, opponentUser);
 
-
-            return Ok();
+            await foreach (var item in result)
+            {
+                yield return item;
+            }
         }
 
     }

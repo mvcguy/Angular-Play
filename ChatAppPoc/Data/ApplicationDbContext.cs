@@ -1,10 +1,12 @@
-﻿using ChatAppPoc.Models;
+﻿using ChatAppPoc.Controllers;
+using ChatAppPoc.Models;
 using IdentityServer4.EntityFramework.Options;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
 namespace ChatAppPoc.Data
@@ -13,7 +15,8 @@ namespace ChatAppPoc.Data
     {
         public ApplicationDbContext(
             DbContextOptions options,
-            IOptions<OperationalStoreOptions> operationalStoreOptions) : base(options, operationalStoreOptions)
+            IOptions<OperationalStoreOptions> operationalStoreOptions)
+            : base(options, operationalStoreOptions)
         {
         }
 
@@ -46,6 +49,19 @@ namespace ChatAppPoc.Data
         public virtual string Message { get; set; }
 
         public virtual DateTime CreatedAt { get; set; }
+
+        internal ChatMessageVm ToChatMessageVm()
+        {
+            return new ChatMessageVm
+            {
+                CreatedAt = CreatedAt,
+                FromUser = FromUser,
+                ToUser = ToUser,
+                Message = Message,
+                Index = Id,
+                Timestamp = CreatedAt.ToString("t")
+            };
+        }
     }
 
     public class ChatUserVm
