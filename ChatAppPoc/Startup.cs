@@ -2,7 +2,9 @@ using ChatAppPoc.Controllers;
 using ChatAppPoc.Data;
 using ChatAppPoc.Models;
 using IdentityServer4.Services;
+using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -12,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace ChatAppPoc
@@ -56,7 +59,7 @@ namespace ChatAppPoc
             services.AddIdentityServer(options =>
             {
                 options.Cors.CorsPolicyName = corsdef;
-                options.UserInteraction.ErrorUrl = "/home/error";
+                options.UserInteraction.ErrorUrl = "~/home/error";
 
             }).AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
@@ -65,20 +68,9 @@ namespace ChatAppPoc
             services.AddControllersWithViews();
             services.AddRazorPages();
 
-        }
+            UpdateJwtOptions(services);
 
-        private static Action<CorsPolicyBuilder> DefaultPolicy()
-        {
-            return builder =>
-            {
-                builder
-                .WithOrigins("http://localhost:4200")
-                .AllowAnyMethod()
-                .AllowCredentials()
-                .AllowAnyHeader();
-            };
         }
-
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -121,5 +113,70 @@ namespace ChatAppPoc
             await context.Response.WriteAsync("Hello from the Backend");
             await next();
         }
+
+        private static void UpdateJwtOptions(IServiceCollection services)
+        {
+            //
+            // configure the options provided/used by: (Ref: https://docs.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-5.0)
+            // services.AddAuthentication()
+            //   .AddIdentityServerJwt();
+            //
+            services.Configure<JwtBearerOptions>(IdentityServerJwtConstants.IdentityServerJwtBearerScheme,
+                options =>
+                {
+                    // TODO: put in the config file
+                    options.Authority = "https://localhost/chatpoc";
+
+
+                    //
+                    // we can also register our own event handlers for the auth process
+                    //
+
+                    /*
+                     * In the following code, the OnTokenValidated event handler is replaced with a custom implementation. 
+                     * This implementation:
+                        1. Calls the original implementation provided by the API authorization support.
+                        2. Run its own custom logic.
+                     * 
+                    */
+                    var onTokenValidated = options.Events.OnTokenValidated;
+
+                    options.Events.OnTokenValidated = async context =>
+                    {
+                        await onTokenValidated(context);
+
+
+                        //
+                        // custom logic
+                        //
+
+                        //Debugger.Log(1, "IDS4", $"token is validated!. Token issue: {context.SecurityToken.Issuer} ");
+                        Debug.WriteLine($"token is validated!. Token issuer: {context.SecurityToken.Issuer} ", "IDS4");
+                    };
+
+                    var error = options.Events.OnAuthenticationFailed;
+
+                    options.Events.OnAuthenticationFailed = async context =>
+                    {
+                        await error(context);
+
+                        Debug.WriteLine($"Error has occurred. Error: {context.Exception?.Message}", "IDS4");
+                    };
+
+                });
+        }
+
+        private static Action<CorsPolicyBuilder> DefaultPolicy()
+        {
+            return builder =>
+            {
+                builder
+                .WithOrigins("http://localhost:4200")
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .AllowAnyHeader();
+            };
+        }
+
     }
 }
