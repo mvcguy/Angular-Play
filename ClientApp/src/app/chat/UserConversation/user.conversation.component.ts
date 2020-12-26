@@ -42,15 +42,13 @@ export class UserConversationComponent implements OnInit {
 
     ngOnInit() {
         this.chatHistory = of(this.chatHistorySource);
-        this.getCurrentUser();
+        this.getCurrentUser();        
     }
     subscribeToSignalREvents() {
 
         if (this.currentUser) {
-            this.signalRService.subscribeToChatSignals(this.currentUser + this.opponentUserName);
-            this.signalRService.signalEmitter
-                .subscribe((data: SignalRChatModel) => this.onNewChatMessageArrived(data));
-
+            var subscriptionId = this.currentUser + this.opponentUserName;
+            this.signalRService.subscribeToChatSignals(subscriptionId, (data: SignalRChatModel) => this.onNewChatMessageArrived(data));
         }
     }
 

@@ -1,6 +1,6 @@
 import { EventEmitter, Inject, Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@aspnet/signalr';
-import { AuthorizeService } from 'src/api-authorization/authorize.service';
+import { Subscription } from 'rxjs';
 import { SignalRChatModel } from './signalr.chat.model';
 
 @Injectable({
@@ -9,11 +9,14 @@ import { SignalRChatModel } from './signalr.chat.model';
 export class SignalRService {
 
   private signalRHub: HubConnection
-  public signalEmitter = new EventEmitter<SignalRChatModel>();
+  public signalEmitter: EventEmitter<SignalRChatModel>;
+  public subscriptions: SubscriptionItem[];
 
   constructor(@Inject('API_URL') private apiUrl: string) {
+    this.signalEmitter = new EventEmitter<SignalRChatModel>();
     this.buildConnection();
-     this.startConnection();
+    this.startConnection();
+    this.subscriptions = [];
   }
   startConnection() {
     if (this.signalRHub.state == HubConnectionState.Connected) return;
@@ -23,7 +26,6 @@ export class SignalRService {
         console.log('Connection has established');
 
         //TODO: try to reconnect if something goes wrong!
-        //this.subscribeToChatSignals(userName);
       }
     ).catch(
       error => {
@@ -37,13 +39,33 @@ export class SignalRService {
       .build();
   }
 
-  
-  // TODO: fix: subscribe only once !
-  subscribeToChatSignals(userName: string) {
-        // TODO: use more secure way!    
+
+
+  subscribeToChatSignals(userName: string, newMethod: (...args: any[]) => void) {
+    // TODO: use more secure way!    
+    // debugger;
+    var index = this.subscriptions.findIndex(({ key }) => key === userName);
+    if (index !== -1) {
+      // delete the existing subscription 
+      var existingSub = this.subscriptions.splice(index, 1)[0];
+      existingSub.subscription.unsubscribe();
+    };
+
+    // TODO: add callback for errors and complete
+    var sub = this.signalEmitter.subscribe(newMethod);
+    this.subscriptions.push({ key: userName, subscription: sub });
+    // remove the handler if exist from before
+    this.signalRHub.off(userName);
+
+    // register the handler
     this.signalRHub.on(userName, (data: SignalRChatModel) => {
       console.log("SignalR: Signal received from server. Data: ", data);
       this.signalEmitter.emit(data);
     });
   }
+}
+
+export class SubscriptionItem {
+  key: string;
+  subscription: Subscription
 }
