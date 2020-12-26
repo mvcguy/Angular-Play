@@ -1,6 +1,7 @@
 using ChatAppPoc.Controllers;
 using ChatAppPoc.Data;
 using ChatAppPoc.Models;
+using ChatAppPoc.Properties;
 using ChatAppPoc.SignalArServices;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.AspNetCore.Authentication;
@@ -13,8 +14,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ChatAppPoc
@@ -131,6 +134,12 @@ namespace ChatAppPoc
                     // TODO: put in the config file
                     options.Authority = "https://localhost/chatpoc";
 
+                    options.TokenValidationParameters.IssuerSigningKey = FakeKeyStore.Key;
+                    options.TokenValidationParameters.RequireAudience = false;
+                    options.TokenValidationParameters.ValidateAudience = false;
+                    options.TokenValidationParameters.ValidateIssuer = false;
+                    options.TokenValidationParameters.ValidateActor = false;
+                    options.TokenValidationParameters.ValidateLifetime = true;
 
                     //
                     // we can also register our own event handlers for the auth process
@@ -177,14 +186,26 @@ namespace ChatAppPoc
             return builder =>
             {
                 builder
-                .WithOrigins("http://localhost:4200")
+                .WithOrigins("http://localhost:4200", "https://locahost/chatui")
                 //.AllowAnyOrigin()
-                //.SetIsOriginAllowedToAllowWildcardSubdomains()
+                .SetIsOriginAllowedToAllowWildcardSubdomains()
                 .AllowAnyMethod()
                 .AllowCredentials()
                 .AllowAnyHeader();
             };
         }
 
+    }
+
+    public static class FakeKeyStore
+    {
+        public static AsymmetricSecurityKey Key;
+
+        static FakeKeyStore()
+        {
+            var props = RSA.Create();
+            props.FromXmlString(Resources.RsaProps);
+            Key = new RsaSecurityKey(props);
+        }
     }
 }
