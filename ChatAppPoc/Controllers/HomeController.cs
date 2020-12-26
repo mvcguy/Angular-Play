@@ -37,6 +37,7 @@ namespace ChatAppPoc.Controllers
         [HttpGet("returnregister")]
         public IActionResult AfterRegisterRedirect()
         {
+            //return Redirect($"https://localhost/chatui/authentication/login?{this.Request.QueryString}");
             return Redirect($"http://localhost:4200/authentication/login?{this.Request.QueryString}");
         }
 

@@ -178,6 +178,8 @@ namespace ChatAppPoc
             {
                 builder
                 .WithOrigins("http://localhost:4200")
+                //.AllowAnyOrigin()
+                //.SetIsOriginAllowedToAllowWildcardSubdomains()
                 .AllowAnyMethod()
                 .AllowCredentials()
                 .AllowAnyHeader();

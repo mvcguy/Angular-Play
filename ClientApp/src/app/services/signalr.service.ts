@@ -1,5 +1,6 @@
 import { EventEmitter, Inject, Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder } from '@aspnet/signalr';
+import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@aspnet/signalr';
+import { AuthorizeService } from 'src/api-authorization/authorize.service';
 import { SignalRChatModel } from './signalr.chat.model';
 
 @Injectable({
@@ -10,17 +11,19 @@ export class SignalRService {
   private signalRHub: HubConnection
   public signalEmitter = new EventEmitter<SignalRChatModel>();
 
-
-
   constructor(@Inject('API_URL') private apiUrl: string) {
     this.buildConnection();
-    this.startConnection();
+     this.startConnection();
   }
   startConnection() {
+    if (this.signalRHub.state == HubConnectionState.Connected) return;
+
     this.signalRHub.start().then(
       () => {
         console.log('Connection has established');
-        this.subscribeToChatSignals();
+
+        //TODO: try to reconnect if something goes wrong!
+        //this.subscribeToChatSignals(userName);
       }
     ).catch(
       error => {
@@ -34,12 +37,13 @@ export class SignalRService {
       .build();
   }
 
-  subscribeToChatSignals() {
-    this.signalRHub.on("ClientSideMethod", (data : SignalRChatModel) => {
+  
+  // TODO: fix: subscribe only once !
+  subscribeToChatSignals(userName: string) {
+        // TODO: use more secure way!    
+    this.signalRHub.on(userName, (data: SignalRChatModel) => {
       console.log("SignalR: Signal received from server. Data: ", data);
       this.signalEmitter.emit(data);
     });
   }
-
-
 }

@@ -47,3 +47,24 @@
     font-weight: bold;
     word-wrap: break-word;
 }
+
+.chat-item-right{
+    float: right;
+    border-radius: 33px 50px 20px 40px;
+    border: 0.5px solid lightgray;
+    padding: 15px;
+    background: rgb(220, 243, 220);
+}
+
+.chat-item-left{
+    float: left;
+    border-radius: 50px 33px 40px 20px;
+    border: 0.5px solid lightgray;
+    padding: 15px;
+    background: lightblue;
+}
+
+.chat-list-item{
+    padding:2px;
+    border: none;
+}

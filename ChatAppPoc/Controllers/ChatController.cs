@@ -148,11 +148,9 @@ namespace ChatAppPoc.Controllers
         }
         public async Task SendMessage(PublicMessage message)
         {
-            var task = Task.Run(() =>
-            {
-                hubContext.Clients.All.SendAsync("ClientSideMethod", message);
-            });
-            await task;
+            var from = message.Props["FromUser"] as string;
+            var to = message.Props["ToUser"] as string;
+            await hubContext.Clients.All.SendAsync(to + from, message);
         }
     }
 
