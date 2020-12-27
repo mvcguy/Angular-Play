@@ -38,7 +38,8 @@ namespace ChatAppPoc.Controllers
         public IActionResult AfterRegisterRedirect()
         {
             //return Redirect($"https://localhost/chatui/authentication/login?{this.Request.QueryString}");
-            return Redirect($"http://localhost:4200/authentication/login?{this.Request.QueryString}");
+            //return Redirect($"http://localhost:4200/authentication/login?{this.Request.QueryString}");
+            return Redirect($"https://moniba.azurewebsites.net/authentication/login?{this.Request.QueryString}");
         }
 
         [HttpGet("error")]

@@ -121,7 +121,7 @@ namespace ChatAppPoc
             await next();
         }
 
-        private static void UpdateJwtOptions(IServiceCollection services)
+        private void UpdateJwtOptions(IServiceCollection services)
         {
             //
             // configure the options provided/used by: (Ref: https://docs.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-5.0)
@@ -132,7 +132,7 @@ namespace ChatAppPoc
                 options =>
                 {
                     // TODO: put in the config file
-                    options.Authority = "https://localhost/chatpoc";
+                    options.Authority = this.Configuration["authority"];
 
                     options.TokenValidationParameters.IssuerSigningKey = FakeKeyStore.Key;
                     options.TokenValidationParameters.RequireAudience = false;
@@ -186,7 +186,7 @@ namespace ChatAppPoc
             return builder =>
             {
                 builder
-                .WithOrigins("http://localhost:4200", "https://locahost/chatui")
+                .WithOrigins("http://localhost:4200", "https://locahost/chatui", "https://moniba.azurewebsites.net")
                 //.AllowAnyOrigin()
                 .SetIsOriginAllowedToAllowWildcardSubdomains()
                 .AllowAnyMethod()

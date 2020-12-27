@@ -184,14 +184,20 @@ export class AuthorizeService {
     }
 
     const settings: any = await response.json();
-    settings.automaticSilentRenew = true;
-    settings.includeIdTokenInSilentRenew = true;    
+    // settings.automaticSilentRenew = true;
+    // settings.includeIdTokenInSilentRenew = true;   
+    
+    settings.userStore = this.getWebStorageStateStore(); 
     this.userManager = new UserManager(settings);
 
     this.userManager.events.addUserSignedOut(async () => {
-      await this.userManager.removeUser();
-      this.userSubject.next(null);
+      //await this.userManager.removeUser();
+      //this.userSubject.next(null);
     });
+  }
+
+  private getWebStorageStateStore() : WebStorageStateStore {
+    return new WebStorageStateStore({ store: window.localStorage });
   }
 
   private getUserFromStorage(): Observable<IUser> {

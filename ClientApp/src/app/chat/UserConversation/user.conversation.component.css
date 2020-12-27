@@ -16,15 +16,17 @@
 }
 
 .chat-text-box{
-    width: 90%;
+    width: 78%;
     height: 50px;
     margin-top: 2px;
 }
 
 .chat-send-btn{
-    width: 10%;
+    width: 20%;
     height: 50px;
     margin-top: 2px;
+    float: right;
+    min-width: 20%;
 }
 
 .chat-window{
