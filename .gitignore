@@ -350,3 +350,10 @@ MigrationBackup/
 .ionide/
 
 appsettings.json
+/ClientApp/.vscode/settings.json
+/ClientApp/src/assets/c.jpeg
+/ClientApp/src/assets/b.jpeg
+/ClientApp/src/assets/a.jpeg
+/ClientApp/.vscode/settings.json
+/ClientApp/.vscode/settings.json
+/ClientApp/.vscode/settings.json

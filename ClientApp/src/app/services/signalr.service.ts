@@ -1,6 +1,7 @@
 import { EventEmitter, Inject, Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@aspnet/signalr';
+import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions } from '@aspnet/signalr';
 import { Subscription } from 'rxjs';
+import { AuthorizeService } from 'src/api-authorization/authorize.service';
 import { SignalRChatModel } from './signalr.chat.model';
 
 @Injectable({
@@ -12,7 +13,9 @@ export class SignalRService {
   public signalEmitter: EventEmitter<SignalRChatModel>;
   public subscriptions: SubscriptionItem[];
 
-  constructor(@Inject('API_URL') private apiUrl: string) {
+  constructor(@Inject('API_URL') private apiUrl: string
+    , private authorize: AuthorizeService
+  ) {
     this.signalEmitter = new EventEmitter<SignalRChatModel>();
     this.buildConnection();
     this.startConnection();
@@ -34,12 +37,15 @@ export class SignalRService {
     );
   }
   buildConnection() {
+
+    const options: IHttpConnectionOptions = {
+      accessTokenFactory: () => this.authorize.getAccessToken().toPromise()
+    };
+
     this.signalRHub = new HubConnectionBuilder()
-      .withUrl(this.apiUrl + '/chathub')
+      .withUrl(this.apiUrl + '/chathub', options)
       .build();
   }
-
-
 
   subscribeToChatSignals(userName: string, newMethod: (...args: any[]) => void) {
     // TODO: use more secure way!    
