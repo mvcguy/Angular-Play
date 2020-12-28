@@ -13,6 +13,11 @@ namespace ChatAppPoc
     {
         public static void Main(string[] args)
         {
+#if DEBUG
+
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
+
+#endif
             CreateHostBuilder(args).Build().Run();
         }
 

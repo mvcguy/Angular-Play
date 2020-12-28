@@ -64,7 +64,9 @@ namespace ChatAppPoc
                 options.Cors.CorsPolicyName = corsdef;
                 options.UserInteraction.ErrorUrl = "~/home/error";
 
-            }).AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
+            }).AddApiAuthorization<ApplicationUser, ApplicationDbContext>
+            (options => { options.SigningCredential = CreateSigningCredentials(); });
+            //.AddSigningCredential(CreateSigningCredentials());
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
@@ -76,6 +78,12 @@ namespace ChatAppPoc
             services.AddSignalR();
 
         }
+
+        private SigningCredentials CreateSigningCredentials()
+        {
+            return new SigningCredentials(FakeKeyStore.Key, SecurityAlgorithms.RsaSha512);
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -159,7 +167,6 @@ namespace ChatAppPoc
                         // call the base
                         await onTokenValidated(context);
 
-
                         //
                         // custom logic
                         //
@@ -176,6 +183,23 @@ namespace ChatAppPoc
                         await error(context);
 
                         Debug.WriteLine($"Error has occurred. Error: {context.Exception?.Message}", "IDS4");
+                    };
+
+                    var existingMr = options.Events.OnMessageReceived;
+                    options.Events.OnMessageReceived = async context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/notify")))
+                        {
+                            // Read the token out of the query string
+                            context.Token = accessToken;
+                        }
+                        else
+                        {
+                            await existingMr(context);
+                        }
                     };
 
                 });

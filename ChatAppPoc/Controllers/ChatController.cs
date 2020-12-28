@@ -1,5 +1,6 @@
 ﻿using ChatAppPoc.Data;
 using ChatAppPoc.SignalArServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System;
@@ -9,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace ChatAppPoc.Controllers
 {
+
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class ChatController : ControllerBase
@@ -22,7 +25,7 @@ namespace ChatAppPoc.Controllers
             this.repository = repository;
             this.messageSender = messageSender;
         }
-
+                
         [HttpGet("searchuser")]
         public async IAsyncEnumerable<ChatUserVm> SearchUsers(string query)
         {
@@ -133,7 +136,8 @@ namespace ChatAppPoc.Controllers
                 CreatedAt = DateTime.Now,
                 FromUser = FromUser,
                 ToUser = ToUser,
-                Message = HtmlEncoder.Default.Encode(Message)
+                //Message = HtmlEncoder.Default.Encode(Message)
+                Message = Message // TODO: use whitelisting
             };
         }
     }
