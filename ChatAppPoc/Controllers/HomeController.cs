@@ -39,6 +39,12 @@ namespace ChatAppPoc.Controllers
             return Error();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            return Ok("Hello from backend 2");
+        }
+
         [HttpGet("returnregister")]
         public IActionResult AfterRegisterRedirect()
         {
