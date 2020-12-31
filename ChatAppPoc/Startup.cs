@@ -188,7 +188,7 @@ namespace ChatAppPoc
                         var accessToken = context.Request.Query["access_token"];
 
                         var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/notify")))
+                        if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chathub")))
                         {
                             // Read the token out of the query string
                             context.Token = accessToken;

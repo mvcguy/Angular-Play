@@ -30,8 +30,8 @@ import { CommonModule } from '@angular/common';
     CommonModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
-      { path: 'chat', component: UserSearchComponent },
-      { path: 'chat/userConversation/:userName', component: UserConversationComponent }
+      { path: 'chat', component: UserSearchComponent, canActivate: [AuthorizeGuard]  },
+      { path: 'chat/userConversation/:userName', component: UserConversationComponent, canActivate: [AuthorizeGuard] }
     ])
   ],
   providers: [
