@@ -1,6 +1,7 @@
-﻿using ChatAppPoc.Controllers;
+﻿using ChatAppPoc.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -42,7 +43,7 @@ namespace ChatAppPoc.Data
                 }
                 catch (Exception e)
                 {
-
+                    Debug.WriteLine(e.Message);
                     throw;
                 }
             });

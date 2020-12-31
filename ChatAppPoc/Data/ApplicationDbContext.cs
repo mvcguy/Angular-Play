@@ -1,5 +1,4 @@
-﻿using ChatAppPoc.Controllers;
-using ChatAppPoc.Models;
+﻿using ChatAppPoc.Models;
 using IdentityServer4.EntityFramework.Options;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;

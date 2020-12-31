@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,14 +35,13 @@ namespace ChatAppPoc.Controllers
         public async Task<IActionResult> Index(string errorId)
         {
             var message = await interaction.GetErrorContextAsync(errorId);
-            return BadRequest(message);
+            Debug.WriteLine(message);
+            return Error();
         }
 
         [HttpGet("returnregister")]
         public IActionResult AfterRegisterRedirect()
         {
-            //return Redirect($"https://localhost/chatui/authentication/login?{this.Request.QueryString}");
-            //return Redirect($"http://localhost:4200/authentication/login?{this.Request.QueryString}");
             return Redirect($"{configuration["AfterRegisterRedirect"]}?{Request.QueryString}");
         }
 

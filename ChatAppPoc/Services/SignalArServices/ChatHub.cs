@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ChatAppPoc.SignalArServices
+namespace ChatAppPoc.Services.SignalArServices
 {
     [Authorize]
     public class ChatHub : Hub

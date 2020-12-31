@@ -1,8 +1,7 @@
-using ChatAppPoc.Controllers;
 using ChatAppPoc.Data;
 using ChatAppPoc.Models;
-using ChatAppPoc.Properties;
-using ChatAppPoc.SignalArServices;
+using ChatAppPoc.Services;
+using ChatAppPoc.Services.SignalArServices;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,7 +16,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Diagnostics;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ChatAppPoc
@@ -49,7 +47,7 @@ namespace ChatAppPoc
 
             services.AddDefaultIdentity<ApplicationUser>(options =>
             {
-                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedAccount = (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "") != "Development";
             }).AddEntityFrameworkStores<ApplicationDbContext>();
 
 
@@ -139,7 +137,6 @@ namespace ChatAppPoc
             services.Configure<JwtBearerOptions>(IdentityServerJwtConstants.IdentityServerJwtBearerScheme,
                 options =>
                 {
-                    // TODO: put in the config file
                     options.Authority = this.Configuration["authority"];
 
                     options.TokenValidationParameters.IssuerSigningKey = FakeKeyStore.Key;
@@ -205,12 +202,12 @@ namespace ChatAppPoc
                 });
         }
 
-        private static Action<CorsPolicyBuilder> DefaultPolicy()
+        private Action<CorsPolicyBuilder> DefaultPolicy()
         {
             return builder =>
             {
                 builder
-                .WithOrigins("http://localhost:4200", "https://locahost/chatui", "https://moniba.azurewebsites.net")
+                .WithOrigins(Configuration["AllowedOrigins"].Split(',', StringSplitOptions.TrimEntries))
                 //.AllowAnyOrigin()
                 .SetIsOriginAllowedToAllowWildcardSubdomains()
                 .AllowAnyMethod()
@@ -219,17 +216,5 @@ namespace ChatAppPoc
             };
         }
 
-    }
-
-    public static class FakeKeyStore
-    {
-        public static AsymmetricSecurityKey Key;
-
-        static FakeKeyStore()
-        {
-            var props = RSA.Create();
-            props.FromXmlString(Resources.RsaProps);
-            Key = new RsaSecurityKey(props);
-        }
     }
 }

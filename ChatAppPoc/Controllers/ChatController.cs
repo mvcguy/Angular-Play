@@ -1,9 +1,8 @@
 ﻿using ChatAppPoc.Data;
-using ChatAppPoc.SignalArServices;
+using ChatAppPoc.Models;
+using ChatAppPoc.Services.SignalArServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using System;
 using System.Collections.Generic;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -84,84 +83,5 @@ namespace ChatAppPoc.Controllers
             }
         }
 
-    }
-
-    public class ChatMessageVm
-    {
-        /* 
-         * //client side
-            class ChatMessage {
-                userName?: string;
-                message?: string;
-                timestamp?: string;
-                index?: number;
-            }
-         */
-
-        public string FromUser { get; set; }
-
-        public string ToUser { get; set; }
-
-        public string Message { get; set; }
-
-        public DateTime CreatedAt { get; set; }
-
-        /// <summary>
-        /// time at user machine when message was sent
-        /// </summary>
-        public string Timestamp { get; set; }
-
-        public int Index { get; set; }
-
-        internal PublicMessage ToPublicMessage()
-        {
-            return new PublicMessage
-            {
-                Props = new Dictionary<string, object>
-                {
-                    {nameof(CreatedAt), DateTime.Now },
-                    {nameof(FromUser), FromUser },
-                    {nameof(ToUser), ToUser },
-                    {nameof(Index), Index },
-                    {nameof(Timestamp), Timestamp },
-                },
-                Body = Message
-            };
-        }
-
-        internal ChatMessage ToDbMessage()
-        {
-            return new ChatMessage
-            {
-                CreatedAt = DateTime.Now,
-                FromUser = FromUser,
-                ToUser = ToUser,
-                //Message = HtmlEncoder.Default.Encode(Message)
-                Message = Message // TODO: use whitelisting
-            };
-        }
-    }
-
-    public class MessageSender
-    {
-        private readonly IHubContext<ChatHub> hubContext;
-
-        public MessageSender(IHubContext<ChatHub> hubContext)
-        {
-            this.hubContext = hubContext;
-        }
-        public async Task SendMessage(PublicMessage message)
-        {
-            var from = message.Props["FromUser"] as string;
-            var to = message.Props["ToUser"] as string;
-            await hubContext.Clients.All.SendAsync(to + from, message);
-        }
-    }
-
-    public class PublicMessage
-    {
-        public IDictionary<string, object> Props { get; set; }
-
-        public string Body { get; set; }
     }
 }
