@@ -20,7 +20,7 @@ import { HttpClientModule } from '@angular/common/http';
         { path: ApplicationPaths.LoginCallback, component: LoginComponent },
         { path: ApplicationPaths.LogOut, component: LogoutComponent },
         { path: ApplicationPaths.LoggedOut, component: LogoutComponent },
-        { path: ApplicationPaths.LogOutCallback, component: LogoutComponent }
+        { path: 'moon/stars', component: LogoutComponent }
       ]
     )
   ],

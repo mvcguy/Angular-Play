@@ -13,6 +13,18 @@ import { AuthorizeInterceptor } from 'src/api-authorization/authorize.intercepto
 import { UserSearchComponent } from './chat/UserSearch/user.search.component';
 import { UserConversationComponent } from './chat/UserConversation/user.conversation.component';
 import { CommonModule } from '@angular/common';
+import { ChatWindowComponent } from './chat/chat-window/chat-window.component';
+import { UserListComponent } from './chat/user-list/user-list.component';
+import { UserManagerService } from './UserManagerService';
+import { UserManager } from 'oidc-client';
+
+
+export async function initUserManager(userMgrService: UserManagerService): Promise<UserManager> {
+  if (!!userMgrService.GetUserManger) return userMgrService.GetUserManger;
+  await userMgrService.load();
+  return userMgrService.GetUserManger;
+}
+
 
 @NgModule({
   declarations: [
@@ -20,7 +32,9 @@ import { CommonModule } from '@angular/common';
     NavMenuComponent,
     HomeComponent,
     UserSearchComponent,
-    UserConversationComponent
+    UserConversationComponent,
+    UserListComponent,
+    ChatWindowComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -30,13 +44,16 @@ import { CommonModule } from '@angular/common';
     CommonModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
-      { path: 'chat', component: UserSearchComponent, canActivate: [AuthorizeGuard]  },
+      { path: 'chat', component: UserSearchComponent, canActivate: [AuthorizeGuard] },
       { path: 'chat/userConversation/:userName', component: UserConversationComponent, canActivate: [AuthorizeGuard] }
     ])
   ],
   providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true }
+    UserManagerService,
+    { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
+    { provide: 'USER_MANAGER', useFactory: initUserManager, deps: [UserManagerService], multi: false }
   ],
   bootstrap: [AppComponent]
 })
+
 export class AppModule { }

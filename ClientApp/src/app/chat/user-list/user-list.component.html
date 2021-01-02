@@ -1,0 +1,12 @@
+<div *ngIf="topUsers">
+
+  <div class="btn-group max-width">
+    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+      aria-expanded="false"> {{selectedUser}}
+    </button>
+    <div class="dropdown-menu">
+      <a *ngFor="let item of topUsers" class="dropdown-item" href="#"
+        (click)="updateUser(item.email)">{{item.email}}</a>
+    </div>
+  </div>
+</div>

@@ -13,6 +13,7 @@ export function getApiUrl() {
   // return 'https://chatapppoc.azurewebsites.net';
 }
 
+
 const providers = [
   { provide: 'BASE_URL', useFactory: getBaseUrl, deps: [] },
   { provide: 'API_URL', useFactory: getApiUrl, deps: [] },

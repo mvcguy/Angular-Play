@@ -1,0 +1,15 @@
+.chat-plugin {
+  width: 400px;
+  height: 500px;
+  right: 50px;
+  float: right;
+  z-index: 1000;
+  top: 70px;
+  position: absolute;
+  background-color: white;
+}
+
+.chat-header {
+  height: 15%;
+  border-bottom: 1px solid blue;
+}

@@ -1,8 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
-import { User, UserManager, WebStorageStateStore } from 'oidc-client';
-import { BehaviorSubject, concat, from, Observable } from 'rxjs';
+import { User, UserManager } from 'oidc-client';
+import { BehaviorSubject, concat, from, Observable, pipe } from 'rxjs';
 import { filter, map, mergeMap, take, tap } from 'rxjs/operators';
-import { ApplicationPaths, ApplicationName } from './api-authorization.constants';
 
 export type IAuthenticationResult =
   SuccessAuthenticationResult |
@@ -38,13 +37,14 @@ export interface IUser {
 })
 export class AuthorizeService {
 
-  constructor(@Inject('API_URL') private apiUrl: string) {
+  constructor(@Inject('USER_MANAGER') private userManagerObj: Promise<UserManager>) {
+    this.userManager = this.userManagerObj;
   }
 
   // By default pop ups are disabled because they don't work properly on Edge.
   // If you want to enable pop up authentication simply set this flag to false.
   private popUpDisabled = true;
-  private userManager: UserManager;
+  private userManager: Promise<UserManager>;
   private userSubject: BehaviorSubject<IUser | null> = new BehaviorSubject(null);
 
   public isAuthenticated(): Observable<boolean> {
@@ -59,8 +59,8 @@ export class AuthorizeService {
   }
 
   public getAccessToken(): Observable<string> {
-    return from(this.ensureUserManagerInitialized())
-      .pipe(mergeMap(() => from(this.userManager.getUser())),
+    return from(this.userManager)
+      .pipe(mergeMap(m => m.getUser()),
         map(user => user && user.access_token));
   }
 
@@ -73,10 +73,11 @@ export class AuthorizeService {
   // 3) If the two methods above fail, we redirect the browser to the IdP to perform a traditional
   //    redirect flow.
   public async signIn(state: any): Promise<IAuthenticationResult> {
-    await this.ensureUserManagerInitialized();
     let user: User = null;
+    let mgr: UserManager = await this.userManager;
     try {
-      user = await this.userManager.signinSilent(this.createArguments());
+
+      user = await mgr.signinSilent(this.createArguments());
       this.userSubject.next(user.profile);
       return this.success(state);
     } catch (silentError) {
@@ -87,7 +88,7 @@ export class AuthorizeService {
         if (this.popUpDisabled) {
           throw new Error('Popup disabled. Change \'authorize.service.ts:AuthorizeService.popupDisabled\' to false to enable it.');
         }
-        user = await this.userManager.signinPopup(this.createArguments());
+        user = await mgr.signinPopup(this.createArguments());
         this.userSubject.next(user.profile);
         return this.success(state);
       } catch (popupError) {
@@ -100,7 +101,7 @@ export class AuthorizeService {
 
         // PopUps might be blocked by the user, fallback to redirect
         try {
-          await this.userManager.signinRedirect(this.createArguments(state));
+          await mgr.signinRedirect(this.createArguments(state));
           return this.redirect();
         } catch (redirectError) {
           console.log('Redirect authentication error: ', redirectError);
@@ -111,10 +112,10 @@ export class AuthorizeService {
   }
 
   public async completeSignIn(url: string): Promise<IAuthenticationResult> {
+    let mgr: UserManager = await this.userManager;
     try {
-      await this.ensureUserManagerInitialized();
       //debugger;
-      const user = await this.userManager.signinCallback(url);
+      const user = await mgr.signinCallback(url);
       this.userSubject.next(user && user.profile);
       return this.success(user && user.state);
     } catch (error) {
@@ -124,19 +125,19 @@ export class AuthorizeService {
   }
 
   public async signOut(state: any): Promise<IAuthenticationResult> {
+    let mgr: UserManager = await this.userManager;
     try {
       if (this.popUpDisabled) {
         throw new Error('Popup disabled. Change \'authorize.service.ts:AuthorizeService.popupDisabled\' to false to enable it.');
       }
-
-      await this.ensureUserManagerInitialized();
-      await this.userManager.signoutPopup(this.createArguments());
+      debugger;
+      await mgr.signoutPopup(this.createArguments());
       this.userSubject.next(null);
       return this.success(state);
     } catch (popupSignOutError) {
       console.log('Popup signout error: ', popupSignOutError);
       try {
-        await this.userManager.signoutRedirect(this.createArguments(state));
+        await mgr.signoutRedirect(this.createArguments(state));
         return this.redirect();
       } catch (redirectSignOutError) {
         console.log('Redirect signout error: ', redirectSignOutError);
@@ -146,9 +147,9 @@ export class AuthorizeService {
   }
 
   public async completeSignOut(url: string): Promise<IAuthenticationResult> {
-    await this.ensureUserManagerInitialized();
     try {
-      const response = await this.userManager.signoutCallback(url);
+      let mgr: UserManager = await this.userManager;
+      const response = await mgr.signoutCallback(url);
       this.userSubject.next(null);
       return this.success(response && response.state);
     } catch (error) {
@@ -173,37 +174,8 @@ export class AuthorizeService {
     return { status: AuthenticationResultStatus.Redirect };
   }
 
-  private async ensureUserManagerInitialized(): Promise<void> {
-    if (this.userManager !== undefined) {
-      return;
-    }
-
-    const response = await fetch(`${this.apiUrl}${ApplicationPaths.ApiAuthorizationClientConfigurationUrl}`);
-    if (!response.ok) {
-      throw new Error(`Could not load settings for '${ApplicationName}'`);
-    }
-
-    const settings: any = await response.json();
-    // settings.automaticSilentRenew = true;
-    // settings.includeIdTokenInSilentRenew = true;   
-    
-    settings.userStore = this.getWebStorageStateStore(); 
-    this.userManager = new UserManager(settings);
-
-    this.userManager.events.addUserSignedOut(async () => {
-      //await this.userManager.removeUser();
-      //this.userSubject.next(null);
-    });
-  }
-
-  private getWebStorageStateStore() : WebStorageStateStore {
-    return new WebStorageStateStore({ store: window.localStorage });
-  }
-
   private getUserFromStorage(): Observable<IUser> {
-    return from(this.ensureUserManagerInitialized())
-      .pipe(
-        mergeMap(() => this.userManager.getUser()),
-        map(u => u && u.profile));
+    return from(this.userManager)
+      .pipe(mergeMap(mgr => mgr.getUser()), map(u => u && u.profile));
   }
 }
