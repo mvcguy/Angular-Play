@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Inject, OnInit, Output } from '@angular/core';
+import { AuthorizeService } from 'src/api-authorization/authorize.service';
 import { ChatUserModel } from '../UserSearch/user.search.component';
 
 @Component({
@@ -14,17 +15,23 @@ export class UserListComponent implements OnInit {
   topUsers: ChatUserModel[];
   selectedUser: string;
 
-  constructor(private http: HttpClient,
-    @Inject('API_URL') private apiUrl: string) {
-    console.log("init");
+  constructor(private http: HttpClient
+    , @Inject('API_URL') private apiUrl:string
+    , @Inject('AUTH_SERVICE') private authService: AuthorizeService
+
+    ) {
   }
   ngOnInit() {
 
     this.selectedUser = "Select user from the list";
-    this.http.get<ChatUserModel[]>(this.apiUrl + '/chat/userlist')
-      .subscribe(
-        result => { this.OnTopUsersQueryResult(result); }
-        , error => { this.OnTopUsersQueryError(error) });
+    this.authService.isAuthenticated().then(isAuthorized => {
+      if (isAuthorized && !this.topUsers) {
+        this.http.get<ChatUserModel[]>(this.apiUrl + '/chat/userlist')
+          .subscribe(
+            result => { this.OnTopUsersQueryResult(result); }
+            , error => { this.OnTopUsersQueryError(error) });
+      }
+    }).catch(error => console.log('cannot load user list. Error: ', error));
   }
 
   private OnTopUsersQueryResult(result: ChatUserModel[]) {

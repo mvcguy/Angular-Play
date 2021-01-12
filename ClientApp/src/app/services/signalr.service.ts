@@ -14,7 +14,7 @@ export class SignalRService {
   public subscriptions: SubscriptionItem[];
 
   constructor(@Inject('API_URL') private apiUrl: string
-    , private authorize: AuthorizeService
+    , @Inject('AUTH_SERVICE') private authorize: AuthorizeService
   ) {
     this.signalEmitter = new EventEmitter<SignalRChatModel>();
     this.buildConnection();
@@ -39,7 +39,7 @@ export class SignalRService {
   buildConnection() {
 
     const options: IHttpConnectionOptions = {
-      accessTokenFactory: () => this.authorize.getAccessToken().toPromise()
+      accessTokenFactory: async () => await this.authorize.getAccessToken()
     };
 
     this.signalRHub = new HubConnectionBuilder()
@@ -48,11 +48,11 @@ export class SignalRService {
   }
 
   subscribeToChatSignals(userName: string, newMethod: (...args: any[]) => void) {
-    // TODO: use more secure way!    
+    // TODO: use more secure way!
     // debugger;
     var index = this.subscriptions.findIndex(({ key }) => key === userName);
     if (index !== -1) {
-      // delete the existing subscription 
+      // delete the existing subscription
       var existingSub = this.subscriptions.splice(index, 1)[0];
       existingSub.subscription.unsubscribe();
     };

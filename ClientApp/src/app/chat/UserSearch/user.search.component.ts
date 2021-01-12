@@ -16,7 +16,7 @@ export class UserSearchComponent implements OnInit {
     console.log("init");
   }
   ngOnInit() {
-    
+
     this.http.get<ChatUserModel[]>(this.apiUrl + '/chat/userlist')
       .subscribe(
         result => { this.OnTopUsersQueryResult(result); }

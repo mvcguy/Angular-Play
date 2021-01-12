@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { AuthorizeService, AuthenticationResultStatus } from '../authorize.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+// import { BehaviorSubject } from 'rxjs';
 import { LoginActions, QueryParameterNames, ApplicationPaths, ReturnUrlType } from '../api-authorization.constants';
 
 // The main responsibility of this component is to handle the user's login process.
@@ -14,14 +14,13 @@ import { LoginActions, QueryParameterNames, ApplicationPaths, ReturnUrlType } fr
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
-  public message = new BehaviorSubject<string>(null);
+  public message: string = null;
   constructor(
     @Inject('API_URL') private apiUrl: string,
     @Inject('BASE_URL') private baseUrl: string,
-    private authorizeService: AuthorizeService,
+    @Inject('AUTH_SERVICE') private authorizeService: AuthorizeService,
     private activatedRoute: ActivatedRoute,
-    private router: Router)
-  {
+    private router: Router) {
   }
 
   async ngOnInit() {
@@ -35,7 +34,7 @@ export class LoginComponent implements OnInit {
         break;
       case LoginActions.LoginFailed:
         const message = this.activatedRoute.snapshot.queryParamMap.get(QueryParameterNames.Message);
-        this.message.next(message);
+        this.message = message;
         break;
       case LoginActions.Profile:
         this.redirectToProfile();
@@ -52,7 +51,7 @@ export class LoginComponent implements OnInit {
   private async login(returnUrl: string): Promise<void> {
     const state: INavigationState = { returnUrl };
     const result = await this.authorizeService.signIn(state);
-    this.message.next(undefined);
+    this.message = undefined;
     switch (result.status) {
       case AuthenticationResultStatus.Redirect:
         break;
@@ -81,7 +80,7 @@ export class LoginComponent implements OnInit {
         await this.navigateToReturnUrl(this.getReturnUrl(result.state));
         break;
       case AuthenticationResultStatus.Fail:
-        this.message.next(result.message);
+        this.message = result.message;
         break;
     }
   }

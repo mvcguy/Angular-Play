@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { User, UserManager } from 'oidc-client';
-import { BehaviorSubject, concat, from, Observable, pipe } from 'rxjs';
-import { filter, map, mergeMap, take, tap } from 'rxjs/operators';
+// import { BehaviorSubject, concat, from, Observable, pipe } from 'rxjs';
+// import { filter, map, mergeMap, take, tap } from 'rxjs/operators';
 
 export type IAuthenticationResult =
   SuccessAuthenticationResult |
@@ -30,6 +30,7 @@ export enum AuthenticationResultStatus {
 
 export interface IUser {
   name?: string;
+  access_token?: string;
 }
 
 @Injectable({
@@ -37,31 +38,26 @@ export interface IUser {
 })
 export class AuthorizeService {
 
-  constructor(@Inject('USER_MANAGER') private userManagerObj: Promise<UserManager>) {
-    this.userManager = this.userManagerObj;
+  constructor(@Inject('USER_MANAGER') private userManager: Promise<UserManager>) {
   }
 
   // By default pop ups are disabled because they don't work properly on Edge.
   // If you want to enable pop up authentication simply set this flag to false.
   private popUpDisabled = true;
-  private userManager: Promise<UserManager>;
-  private userSubject: BehaviorSubject<IUser | null> = new BehaviorSubject(null);
 
-  public isAuthenticated(): Observable<boolean> {
-    return this.getUser().pipe(map(u => !!u));
+  public async isAuthenticated(): Promise<boolean> {
+    return !!(await this.getUser());
   }
 
-  public getUser(): Observable<IUser | null> {
-    return concat(
-      this.userSubject.pipe(take(1), filter(u => !!u)),
-      this.getUserFromStorage().pipe(filter(u => !!u), tap(u => this.userSubject.next(u))),
-      this.userSubject.asObservable());
+  public async getUser(): Promise<IUser> {
+    return await this.getUserFromStorage();
   }
 
-  public getAccessToken(): Observable<string> {
-    return from(this.userManager)
-      .pipe(mergeMap(m => m.getUser()),
-        map(user => user && user.access_token));
+  public async getAccessToken(): Promise<string> {
+    var user = await this.getUser();
+    var result = user && user.access_token;
+    // debugger;
+    return result;
   }
 
   // We try to authenticate the user in three different ways:
@@ -73,12 +69,13 @@ export class AuthorizeService {
   // 3) If the two methods above fail, we redirect the browser to the IdP to perform a traditional
   //    redirect flow.
   public async signIn(state: any): Promise<IAuthenticationResult> {
+    // debugger;
     let user: User = null;
     let mgr: UserManager = await this.userManager;
+    if (mgr == null) return this.error("Cannot sign in at the moment. Try again latter");
     try {
 
       user = await mgr.signinSilent(this.createArguments());
-      this.userSubject.next(user.profile);
       return this.success(state);
     } catch (silentError) {
       // User might not be authenticated, fallback to popup authentication
@@ -89,7 +86,6 @@ export class AuthorizeService {
           throw new Error('Popup disabled. Change \'authorize.service.ts:AuthorizeService.popupDisabled\' to false to enable it.');
         }
         user = await mgr.signinPopup(this.createArguments());
-        this.userSubject.next(user.profile);
         return this.success(state);
       } catch (popupError) {
         if (popupError.message === 'Popup window closed') {
@@ -112,11 +108,12 @@ export class AuthorizeService {
   }
 
   public async completeSignIn(url: string): Promise<IAuthenticationResult> {
+    // debugger;
     let mgr: UserManager = await this.userManager;
     try {
-      //debugger;
+      debugger;
+      if (mgr == null) return this.error("Cannot sign in at the moment. Try again latter");
       const user = await mgr.signinCallback(url);
-      this.userSubject.next(user && user.profile);
       return this.success(user && user.state);
     } catch (error) {
       console.log('There was an error signing in: ', error);
@@ -125,14 +122,15 @@ export class AuthorizeService {
   }
 
   public async signOut(state: any): Promise<IAuthenticationResult> {
+    // debugger;
     let mgr: UserManager = await this.userManager;
+    if (mgr == null) return this.error("Cannot sign out at the moment. Try again latter");
     try {
       if (this.popUpDisabled) {
         throw new Error('Popup disabled. Change \'authorize.service.ts:AuthorizeService.popupDisabled\' to false to enable it.');
       }
-      debugger;
+      // debugger;
       await mgr.signoutPopup(this.createArguments());
-      this.userSubject.next(null);
       return this.success(state);
     } catch (popupSignOutError) {
       console.log('Popup signout error: ', popupSignOutError);
@@ -147,10 +145,11 @@ export class AuthorizeService {
   }
 
   public async completeSignOut(url: string): Promise<IAuthenticationResult> {
+    // debugger;
     try {
       let mgr: UserManager = await this.userManager;
+      if (mgr == null) return this.error("Cannot signout at the moment. Please try again later");
       const response = await mgr.signoutCallback(url);
-      this.userSubject.next(null);
       return this.success(response && response.state);
     } catch (error) {
       console.log(`There was an error trying to log out '${error}'.`);
@@ -172,10 +171,20 @@ export class AuthorizeService {
 
   private redirect(): IAuthenticationResult {
     return { status: AuthenticationResultStatus.Redirect };
+
   }
 
-  private getUserFromStorage(): Observable<IUser> {
-    return from(this.userManager)
-      .pipe(mergeMap(mgr => mgr.getUser()), map(u => u && u.profile));
+  private async getUserFromStorage(): Promise<IUser> {
+
+    // debugger;
+    var mgr = await this.userManager;
+    if (!!mgr) {
+      var usr = await mgr.getUser();
+      if (!!usr && !!usr.profile) {
+        return { name: usr.profile.name, access_token: usr.access_token }
+      }
+    }
+
+    return null;
   }
 }

@@ -1,10 +1,9 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Inject, Input, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { from, Observable, of } from "rxjs";
-import { filter, first, map, take } from "rxjs/operators";
-import { AuthorizeService } from "src/api-authorization/authorize.service";
-import { SignalRChatModel, SignalRChatProps } from "src/app/services/signalr.chat.model";
+import { Observable, of } from "rxjs";
+import { AuthorizeService, IUser } from "src/api-authorization/authorize.service";
+import { SignalRChatModel } from "src/app/services/signalr.chat.model";
 import { SignalRService } from "src/app/services/signalr.service";
 import { ChatMessage } from "./ChatMessage";
 
@@ -23,45 +22,55 @@ export class UserConversationComponent implements OnInit {
   @Input()
   get selectedUser(): string { return this._selectedUser };
   set selectedUser(value: string) {
-    this._selectedUser = value;
-    this.opponentUserName = this._selectedUser;
-    this.RefreshChat();
-    this.subscribeToSignalREvents();
+
+    if (value && value != '') {
+      this._selectedUser = value;
+
+      //
+      // TODO: How you await the async calls in the setter ?
+      //
+      this.RefreshChat();
+      this.subscribeToSignalREvents();
+    }
   }
 
-  public isAuthenticated: Observable<boolean>;
-  public currentUser: string;
-  public opponentUserName: string;
   public chatHistory: Observable<ChatMessage[]>;
   public chatHistorySource: ChatMessage[];
   public currentMessage: ChatMessage;
   public messageSeq: number = 1;
   public chatIsScrolledToView: boolean = false;
   public historyFetched: boolean = false;
+  public isAuthenticated: boolean = false;
+  public currentUser: IUser = null;
 
-  constructor(private authService: AuthorizeService
-    , private activatedRoute: ActivatedRoute
-    , @Inject('API_URL') private apiUrl: string
+  constructor(@Inject('API_URL') private apiUrl: string
+    , @Inject('AUTH_SERVICE') private authService: AuthorizeService
     , private signalRService: SignalRService
     , private http: HttpClient) {
 
     this.currentMessage = new ChatMessage();
-    this.isAuthenticated = this.authService.isAuthenticated();
 
-    this.opponentUserName = this.activatedRoute.snapshot.paramMap.get('userName');
+    //
+    // not needed anymore
+    //
+    // this.opponentUserName = this.activatedRoute.snapshot.paramMap.get('userName');
     this.chatHistorySource = [];
     this.showSelectedUser = true;
+    this.selectedUser = '';
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.chatHistory = of(this.chatHistorySource);
-    this.getCurrentUser();
+    this.isAuthenticated = await this.authService.isAuthenticated();
+    this.currentUser = await this.authService.getUser();
   }
-  subscribeToSignalREvents() {
+  async subscribeToSignalREvents() {
 
-    if (this.currentUser && this.opponentUserName) {
-      var subscriptionId = this.currentUser + this.opponentUserName;
-      this.signalRService.subscribeToChatSignals(subscriptionId, (data: SignalRChatModel) => this.onNewChatMessageArrived(data));
+    var user = await this.authService.getUser();
+    if (!!user && user.name && this.selectedUser) {
+      var subscriptionId = user.name + this.selectedUser;
+      this.signalRService
+        .subscribeToChatSignals(subscriptionId, (data: SignalRChatModel) => this.onNewChatMessageArrived(data));
     }
   }
 
@@ -85,19 +94,20 @@ export class UserConversationComponent implements OnInit {
     }
   }
 
-  public RefreshChat() {
+  public async RefreshChat() {
     this.historyFetched = false;
-    this.GetChatHistory();
+    await this.GetChatHistory();
   }
 
-  private GetChatHistory() {
+  private async GetChatHistory() {
 
-    console.log('GetHistory: CurrentUser: ' + this.currentUser + ', OppUser: ' + this.opponentUserName);
+    var user = (await this.authService.getUser())?.name;
+    console.log('GetHistory: CurrentUser: ' + user + ', OppUser: ' + this.selectedUser);
 
-    if (this.currentUser && this.opponentUserName && !this.historyFetched) {
+    if (user && this.selectedUser && !this.historyFetched) {
       this.historyFetched = true;
-      this.http.get<ChatMessage[]>(this.apiUrl + '/chat/messagehistory?currentuser=' + this.currentUser
-        + '&opponentuser=' + this.opponentUserName)
+      this.http.get<ChatMessage[]>(this.apiUrl + '/chat/messagehistory?currentuser=' + user
+        + '&opponentuser=' + this.selectedUser)
         .subscribe(
           result => this.OnChatHistoryReceived(result),
           error => this.OnChatHistoryError(error)
@@ -120,19 +130,11 @@ export class UserConversationComponent implements OnInit {
     this.chatIsScrolledToView = false;
   }
 
-  getCurrentUser(): void {
-    this.authService.getUser().pipe(map(u => u && u.name)).pipe(take(1)).subscribe(user => {
-      this.currentUser = user;
-      // this.GetChatHistory();
-      // this.subscribeToSignalREvents();
-    });
-  }
-
-  public sendMessage() {
-    this.currentMessage.fromUser = this.currentUser;
+  public async sendMessage() {
+    this.currentMessage.fromUser = (await this.authService.getUser())?.name;
     this.currentMessage.index = this.messageSeq++;
     this.currentMessage.timestamp = new Date().toLocaleTimeString();
-    this.currentMessage.toUser = this.opponentUserName;
+    this.currentMessage.toUser = this.selectedUser;
 
     this.chatHistorySource.push(this.currentMessage);
     this.chatIsScrolledToView = false;

@@ -1,9 +1,9 @@
 <div *ngIf="showSelectedUser">
-  <h4>{{opponentUserName}}</h4>
+  <h4>{{selectedUser}}</h4>
 </div>
 <div style="display:none;"><a class="btn btn-default" (click)="RefreshChat()">Refresh</a></div>
 
-<div *ngIf="!(isAuthenticated | async)">
+<div *ngIf="!(isAuthenticated)">
   <span class="error">You must login to continue using the chat !</span>
 </div>
 
@@ -12,7 +12,7 @@
     <div class="chat-history" id="chatHistory">
       <ul class="list-group">
         <li class="list-group-item chat-list-item" *ngFor="let item of chatHistory | async" id="item-{{item.index}}">
-          <div [ngClass]="(item.fromUser===currentUser)?'chat-item-right':'chat-item-left'">
+          <div [ngClass]="(item.fromUser=== currentUser?.name)?'chat-item-right':'chat-item-left'">
             <div>
               <span class="chat-user-name">{{ item.fromUser }} </span>
               <span class="chat-time-stamp">{{ item.timestamp }}</span>

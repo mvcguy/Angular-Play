@@ -15,14 +15,16 @@ import { UserConversationComponent } from './chat/UserConversation/user.conversa
 import { CommonModule } from '@angular/common';
 import { ChatWindowComponent } from './chat/chat-window/chat-window.component';
 import { UserListComponent } from './chat/user-list/user-list.component';
-import { UserManagerService } from './UserManagerService';
 import { UserManager } from 'oidc-client';
+import { UserManagerService } from 'src/api-authorization/UserManagerService';
+import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
+import { take } from 'rxjs/operators';
 
 
 export async function initUserManager(userMgrService: UserManagerService): Promise<UserManager> {
-  if (!!userMgrService.GetUserManger) return userMgrService.GetUserManger;
+  if (!!userMgrService.userManger) return userMgrService.userManger;
   await userMgrService.load();
-  return userMgrService.GetUserManger;
+  return userMgrService.userManger;
 }
 
 
@@ -51,7 +53,8 @@ export async function initUserManager(userMgrService: UserManagerService): Promi
   providers: [
     UserManagerService,
     { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
-    { provide: 'USER_MANAGER', useFactory: initUserManager, deps: [UserManagerService], multi: false }
+    { provide: 'USER_MANAGER', useFactory: initUserManager, deps: [UserManagerService], multi: false },
+    { provide: 'AUTH_SERVICE', useClass: AuthorizeService, multi: false }
   ],
   bootstrap: [AppComponent]
 })
