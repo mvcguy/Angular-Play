@@ -16,9 +16,18 @@ export class LoginMenuComponent implements OnInit {
   async ngOnInit() {
 
     var result = await this.authService.getUser();
-    this.userName = result && result.name;
-    this.isAuthenticated = !!result;
 
+    this.onUserEvent(result, "promise");
+
+    this.authService.subscribeUserEvents('login-menu-component', (user: IUser) => { this.onUserEvent(user, "event") });
+
+  }
+
+  private onUserEvent(user: IUser, source: string) {
+    // debugger;
+    this.userName = user && user.name;
+    this.isAuthenticated = !!user;
+    console.log('login-menu-comp: login-source: ', source);
   }
 
   public userName: string;

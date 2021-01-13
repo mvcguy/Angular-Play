@@ -1,7 +1,7 @@
 import { EventEmitter, Inject, Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions } from '@aspnet/signalr';
 import { Subscription } from 'rxjs';
-import { AuthorizeService } from 'src/api-authorization/authorize.service';
+import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
 import { SignalRChatModel } from './signalr.chat.model';
 
 @Injectable({
@@ -14,37 +14,55 @@ export class SignalRService {
   public subscriptions: SubscriptionItem[];
 
   constructor(@Inject('API_URL') private apiUrl: string
-    , @Inject('AUTH_SERVICE') private authorize: AuthorizeService
+    , @Inject('AUTH_SERVICE') private authService: AuthorizeService
   ) {
     this.signalEmitter = new EventEmitter<SignalRChatModel>();
     this.buildConnection();
-    this.startConnection();
+
+    this.authService.isAuthenticated().then((isAuthenticated) => {
+      if (isAuthenticated) {
+        this.startConnection();
+      }
+    }).catch(console.log);
+
+    this.authService.subscribeUserEvents('signal-r-service', (user: IUser) => { this.setupConnection(user) });
     this.subscriptions = [];
+
   }
+
+  setupConnection(user: IUser) {
+    if (!!user) {
+      this.startConnection();
+    }
+  }
+
   startConnection() {
     if (this.signalRHub.state == HubConnectionState.Connected) return;
 
     this.signalRHub.start().then(
       () => {
-        console.log('Connection has established');
-
+        //console.log('Connection has established');
         //TODO: try to reconnect if something goes wrong!
       }
     ).catch(
       error => {
-        console.error('SignalR: Error has occurred while connecting. Error: ', error);
+        //console.error('SignalR: Error has occurred while connecting. Error: ', error);
       }
     );
   }
   buildConnection() {
 
     const options: IHttpConnectionOptions = {
-      accessTokenFactory: async () => await this.authorize.getAccessToken()
+      accessTokenFactory: async () => await this.authService.getAccessToken()
     };
 
-    this.signalRHub = new HubConnectionBuilder()
-      .withUrl(this.apiUrl + '/chathub', options)
-      .build();
+    try {
+      this.signalRHub = new HubConnectionBuilder()
+        .withUrl(this.apiUrl + '/chathub', options)
+        .build();
+    } catch (error) {
+
+    }
   }
 
   subscribeToChatSignals(userName: string, newMethod: (...args: any[]) => void) {

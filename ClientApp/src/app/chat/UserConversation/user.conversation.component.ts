@@ -61,14 +61,24 @@ export class UserConversationComponent implements OnInit {
 
   async ngOnInit() {
     this.chatHistory = of(this.chatHistorySource);
-    this.isAuthenticated = await this.authService.isAuthenticated();
-    this.currentUser = await this.authService.getUser();
-  }
-  async subscribeToSignalREvents() {
-
     var user = await this.authService.getUser();
-    if (!!user && user.name && this.selectedUser) {
-      var subscriptionId = user.name + this.selectedUser;
+    this.onUserEvent(user, 'promise');
+    this.authService.subscribeUserEvents('user-conversation-component', (user: IUser) => {
+      this.onUserEvent(user, 'event');
+    });
+  }
+
+  private onUserEvent(user: IUser, source: string) {
+    this.currentUser = user;
+    this.isAuthenticated = !!user;
+    console.log('user-conversation-comp: userevent source: %s, Event-Payload: %o', source, user);
+    this.RefreshChat();
+    this.subscribeToSignalREvents();
+  }
+
+  async subscribeToSignalREvents() {
+    if (!!this.currentUser && this.currentUser.name && this.selectedUser) {
+      var subscriptionId = this.currentUser.name + this.selectedUser;
       this.signalRService
         .subscribeToChatSignals(subscriptionId, (data: SignalRChatModel) => this.onNewChatMessageArrived(data));
     }
@@ -101,7 +111,7 @@ export class UserConversationComponent implements OnInit {
 
   private async GetChatHistory() {
 
-    var user = (await this.authService.getUser())?.name;
+    var user = this.currentUser && this.currentUser.name;
     console.log('GetHistory: CurrentUser: ' + user + ', OppUser: ' + this.selectedUser);
 
     if (user && this.selectedUser && !this.historyFetched) {

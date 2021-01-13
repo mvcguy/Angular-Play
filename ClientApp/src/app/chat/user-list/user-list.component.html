@@ -5,8 +5,7 @@
       aria-expanded="false"> {{selectedUser}}
     </button>
     <div class="dropdown-menu">
-      <a *ngFor="let item of topUsers" class="dropdown-item" href="#"
-        (click)="updateUser(item.email)">{{item.email}}</a>
+      <a style="cursor: pointer;" *ngFor="let item of topUsers" class="dropdown-item" (click)="updateUser(item.email)">{{item.email}}</a>
     </div>
   </div>
 </div>

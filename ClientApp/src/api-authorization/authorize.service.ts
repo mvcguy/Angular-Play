@@ -1,5 +1,6 @@
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, EventEmitter } from '@angular/core';
 import { User, UserManager } from 'oidc-client';
+import { SubscriptionItem } from 'src/app/services/signalr.service';
 // import { BehaviorSubject, concat, from, Observable, pipe } from 'rxjs';
 // import { filter, map, mergeMap, take, tap } from 'rxjs/operators';
 
@@ -41,9 +42,27 @@ export class AuthorizeService {
   constructor(@Inject('USER_MANAGER') private userManager: Promise<UserManager>) {
   }
 
+  private userEvents: EventEmitter<IUser> = new EventEmitter<IUser>();
+
+  public subscriptions: SubscriptionItem[] = [];
   // By default pop ups are disabled because they don't work properly on Edge.
   // If you want to enable pop up authentication simply set this flag to false.
   private popUpDisabled = true;
+
+
+  public subscribeUserEvents(uniqueName: string, newMethod: (...args: any[]) => void) {
+    // debugger;
+    var index = this.subscriptions.findIndex(({ key }) => key === uniqueName);
+    if (index !== -1) {
+      // delete the existing subscription
+      var existingSub = this.subscriptions.splice(index, 1)[0];
+      existingSub.subscription.unsubscribe();
+    };
+
+    // TODO: add callback for errors and complete
+    var sub = this.userEvents.subscribe(newMethod);
+    this.subscriptions.push({ key: uniqueName, subscription: sub });
+  }
 
   public async isAuthenticated(): Promise<boolean> {
     return !!(await this.getUser());
@@ -76,6 +95,7 @@ export class AuthorizeService {
     try {
 
       user = await mgr.signinSilent(this.createArguments());
+      this.userEvents.emit({ name: user && user.profile.name, access_token: user && user.access_token });
       return this.success(state);
     } catch (silentError) {
       // User might not be authenticated, fallback to popup authentication
@@ -86,6 +106,7 @@ export class AuthorizeService {
           throw new Error('Popup disabled. Change \'authorize.service.ts:AuthorizeService.popupDisabled\' to false to enable it.');
         }
         user = await mgr.signinPopup(this.createArguments());
+        this.userEvents.emit({ name: user && user.profile.name, access_token: user && user.access_token });
         return this.success(state);
       } catch (popupError) {
         if (popupError.message === 'Popup window closed') {
@@ -108,12 +129,13 @@ export class AuthorizeService {
   }
 
   public async completeSignIn(url: string): Promise<IAuthenticationResult> {
-    // debugger;
+
     let mgr: UserManager = await this.userManager;
     try {
-      debugger;
       if (mgr == null) return this.error("Cannot sign in at the moment. Try again latter");
       const user = await mgr.signinCallback(url);
+      this.userEvents.emit({ name: user && user.profile.name, access_token: user && user.access_token });
+      // debugger;
       return this.success(user && user.state);
     } catch (error) {
       console.log('There was an error signing in: ', error);
@@ -150,6 +172,7 @@ export class AuthorizeService {
       let mgr: UserManager = await this.userManager;
       if (mgr == null) return this.error("Cannot signout at the moment. Please try again later");
       const response = await mgr.signoutCallback(url);
+      this.userEvents.emit(null);
       return this.success(response && response.state);
     } catch (error) {
       console.log(`There was an error trying to log out '${error}'.`);
