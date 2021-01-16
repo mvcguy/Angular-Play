@@ -2,7 +2,8 @@ import { EventEmitter, Inject, Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions } from '@aspnet/signalr';
 import { Subscription } from 'rxjs';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
-import { SignalRChatModel } from './signalr.chat.model';
+import { ChatMessage } from '../common/ChatMessage';
+import { SignalRChatModel } from '../common/signalr.chat.model';
 
 @Injectable({
   providedIn: 'root'
@@ -81,6 +82,7 @@ export class SignalRService {
     this.signalRHub.off(userName);
     // console.log('subscription list: ', this.subscriptions);
     // register the handler
+
     this.signalRHub.on(userName, (data: SignalRChatModel) => {
       // console.log("SignalR: Signal received from server. TargetUser: %s Data: %o", userName, data);
       var index = this.subscriptions.findIndex(({ key }) => key === data.props.ToUser);
@@ -90,6 +92,16 @@ export class SignalRService {
       }
     });
   }
+
+  public async sendMessage(chatMessage: ChatMessage): Promise<void> {
+    await this.signalRHub.send('SendMessage', chatMessage);
+  }
+
+  public async markMessageAsSeen(messages: ChatMessage[]): Promise<void> {
+    await this.signalRHub.send('MarkAsSeen', messages);
+    console.log('messages are marked as Seen');
+  }
+
 }
 
 export class ChatSubscriptionItem {
@@ -97,7 +109,7 @@ export class ChatSubscriptionItem {
   subscription: (...args: any[]) => void
 }
 
-export class AuthSubscriptionItem{
+export class AuthSubscriptionItem {
   key: string;
   subscription: Subscription
 }

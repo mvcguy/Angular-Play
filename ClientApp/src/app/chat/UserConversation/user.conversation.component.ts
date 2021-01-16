@@ -3,9 +3,9 @@ import { Component, EventEmitter, Inject, Input, OnInit, Output } from "@angular
 import { ActivatedRoute } from "@angular/router";
 // import { Observable, of } from "rxjs";
 import { AuthorizeService, IUser } from "src/api-authorization/authorize.service";
-import { SignalRChatModel } from "src/app/services/signalr.chat.model";
+import { SignalRChatModel } from "src/app/common/signalr.chat.model";
 import { SignalRService } from "src/app/services/signalr.service";
-import { ChatMessage, UserChat } from "./ChatMessage";
+import { ChatMessage, UserChat } from "../../common/ChatMessage";
 
 @Component({
   selector: 'app-chat-user-conversation',
@@ -43,7 +43,7 @@ export class UserConversationComponent implements OnInit {
 
   constructor(@Inject('API_URL') private apiUrl: string
     , @Inject('AUTH_SERVICE') private authService: AuthorizeService
-    , private signalRService: SignalRService
+    , @Inject('SIGNAL_R_SERVICE') private signalRService: SignalRService
     , private http: HttpClient) {
 
     this.currentMessage = new ChatMessage();
@@ -134,9 +134,14 @@ export class UserConversationComponent implements OnInit {
   }
   OnChatHistoryReceived(result: ChatMessage[]): void {
 
-    if (this.selectedUser === '') return;
+    if (this.selectedUser === '' || this.selectedUser === undefined || this.selectedUser === null) return;
 
     this.currentChat = { userName: this.selectedUser, chatMessages: [...result] };
+
+    this.currentChat.chatMessages.forEach((chatMessage, index) => {
+      this.chatMessageArrived.emit(chatMessage);
+    });
+
     this.chatIsScrolledToView = false;
   }
 
@@ -146,6 +151,8 @@ export class UserConversationComponent implements OnInit {
       return;
     }
 
+    if (!this.currentMessage.message) return;
+
     this.currentMessage.fromUser = this.currentUser.name;
     this.currentMessage.index = this.messageSeq++;
     this.currentMessage.timestamp = new Date().toLocaleTimeString();
@@ -154,11 +161,13 @@ export class UserConversationComponent implements OnInit {
     this.currentChat.chatMessages.push(this.currentMessage);
     this.chatIsScrolledToView = false;
 
-    this.http.post(this.apiUrl + '/chat/sendmessage', this.currentMessage)
-      .subscribe(
-        result => this.OnSendMessageResult(result),
-        error => this.OnSendMessageError(error)
-      );
+    // this.http.post(this.apiUrl + '/chat/sendmessage', this.currentMessage)
+    //   .subscribe(
+    //     result => this.OnSendMessageResult(result),
+    //     error => this.OnSendMessageError(error)
+    //   );
+
+    await this.signalRService.sendMessage(this.currentMessage)
 
     // re-new current  message
     this.currentMessage = new ChatMessage();

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
-import { ChatMessage } from '../UserConversation/ChatMessage';
+import { ChatMessage } from '../../common/ChatMessage';
 import { ChatUserModel } from '../UserSearch/user.search.component';
 
 @Component({
@@ -24,6 +24,7 @@ export class UserListComponent implements OnInit {
 
   topUsers: ChatUserModel[];
   selectedUser: string;
+  currentUser: IUser;
 
   constructor(private http: HttpClient
     , @Inject('API_URL') private apiUrl: string
@@ -43,6 +44,7 @@ export class UserListComponent implements OnInit {
   }
 
   private onUserAuthorized(user: IUser, source: string) {
+    this.currentUser = user;
     var isAuthenticated = !!user && user.name !== undefined;
     if (isAuthenticated && !this.topUsers) {
       this.http.get<ChatUserModel[]>(this.apiUrl + '/chat/userlist')
@@ -63,21 +65,25 @@ export class UserListComponent implements OnInit {
   public updateUser(user: string) {
     this.selectedUser = user;
     this.userSelected.emit(this.selectedUser);
-
-    // marked the messages are seen
-    this.chatNotifications.forEach((chatMessage, index) => {
-      if (user === chatMessage.fromUser)
-        chatMessage.seen = true;
-    });
   }
 
   public getMessageCount(user: string): number {
+
+    if (this.currentUser === null || this.currentUser.name === undefined)
+      return 0;
+    if (user === this.currentUser.name) return 0;
+
     var filtered = this.chatNotifications
       .filter((chatMessage, index) => chatMessage.fromUser === user && chatMessage.seen === false);
     return filtered.length;
   }
 
   public showPendingMessage(user: string): boolean {
+    if (this.currentUser === null || this.currentUser.name === undefined)
+      return false;
+
+    if (user === this.currentUser.name) return false;
+
     var index = this.chatNotifications.findIndex(({ fromUser, seen }) => fromUser == user && seen === false);
     return index >= 0;
   }

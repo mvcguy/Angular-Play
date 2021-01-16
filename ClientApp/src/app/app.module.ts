@@ -19,6 +19,7 @@ import { UserManager } from 'oidc-client';
 import { UserManagerService } from 'src/api-authorization/UserManagerService';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
 import { take } from 'rxjs/operators';
+import { SignalRService } from './services/signalr.service';
 
 
 export async function initUserManager(userMgrService: UserManagerService): Promise<UserManager> {
@@ -54,7 +55,8 @@ export async function initUserManager(userMgrService: UserManagerService): Promi
     UserManagerService,
     { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
     { provide: 'USER_MANAGER', useFactory: initUserManager, deps: [UserManagerService], multi: false },
-    { provide: 'AUTH_SERVICE', useClass: AuthorizeService, multi: false }
+    { provide: 'AUTH_SERVICE', useClass: AuthorizeService, multi: false },
+    { provide: 'SIGNAL_R_SERVICE', useClass: SignalRService, multi: false }
   ],
   bootstrap: [AppComponent]
 })

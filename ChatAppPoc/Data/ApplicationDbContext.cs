@@ -3,10 +3,6 @@ using IdentityServer4.EntityFramework.Options;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 
 namespace ChatAppPoc.Data
 {
@@ -34,59 +30,5 @@ namespace ChatAppPoc.Data
         }
 
         public virtual DbSet<ChatMessage> ChatMessages { get; set; }
-    }
-
-    public class ChatMessage
-    {
-        [Key]
-        public virtual int Id { get; set; }
-
-        public virtual string FromUser { get; set; }
-
-        public virtual string ToUser { get; set; }
-
-        public virtual string Message { get; set; }
-
-        public virtual DateTime CreatedAt { get; set; }
-
-        internal ChatMessageVm ToChatMessageVm()
-        {
-            return new ChatMessageVm
-            {
-                CreatedAt = CreatedAt,
-                FromUser = FromUser,
-                ToUser = ToUser,
-                Message = Message,
-                Index = Id,
-                Timestamp = CreatedAt.ToString("t")
-            };
-        }
-    }
-
-    public class ChatUserVm
-    {
-        public string Name { get; set; }
-
-        public string UserName { get; set; }
-
-        public string Email { get; set; }
-
-        public string Phone { get; set; }
-
-
-
-    }
-
-    public static class ModelExtentions
-    {
-        public static ChatUserVm ToChatUserVm(this ApplicationUser applicationUser)
-        {
-            return new ChatUserVm
-            {
-                UserName = applicationUser.UserName,
-                Email = applicationUser.Email,
-                Phone = applicationUser.PhoneNumber
-            };
-        }
     }
 }

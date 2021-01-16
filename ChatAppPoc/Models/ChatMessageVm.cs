@@ -31,6 +31,8 @@ namespace ChatAppPoc.Models
 
         public int Index { get; set; }
 
+        public bool Seen { get; set; }
+
         internal PublicMessage ToPublicMessage()
         {
             return new PublicMessage
@@ -42,6 +44,7 @@ namespace ChatAppPoc.Models
                     {nameof(ToUser), ToUser },
                     {nameof(Index), Index },
                     {nameof(Timestamp), Timestamp },
+                    {nameof(Seen), Seen }
                 },
                 Body = Message
             };

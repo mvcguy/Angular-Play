@@ -55,6 +55,11 @@ namespace ChatAppPoc.Data
             }
         }
 
+        /// <summary>
+        /// creates a new message in the database
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         internal async Task SaveMessage(ChatMessageVm message)
         {
             var dbMessage = message.ToDbMessage();
@@ -68,7 +73,7 @@ namespace ChatAppPoc.Data
             var result = await Task.Run(() =>
             {
                 return dbContext.ChatMessages
-                .Where(x => (x.FromUser == fromUser && x.ToUser == toUser) 
+                .Where(x => (x.FromUser == fromUser && x.ToUser == toUser)
                 || (x.ToUser == fromUser && x.FromUser == toUser)).ToList();
             });
 
@@ -77,6 +82,26 @@ namespace ChatAppPoc.Data
                 yield return item.ToChatMessageVm();
             }
 
+        }
+
+        internal async Task MarkAsSeen(IEnumerable<ChatMessageVm> messages)
+        {
+            //
+            // TODO: think about some optimized way to batch update the seen status of given messages
+            //
+            var hasUpdates = false;
+            foreach (var item in messages)
+            {
+                var message = dbContext.ChatMessages.FirstOrDefault(x => x.Id == item.Index);
+                if (message == null || message.Seen) continue;
+
+                message.Seen = true;
+                dbContext.Update(message);
+                hasUpdates = true;
+            }
+
+            if(hasUpdates)
+                await dbContext.SaveChangesAsync();
         }
     }
 }
