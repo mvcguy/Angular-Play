@@ -1,4 +1,4 @@
-import { BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, Title } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -20,6 +20,8 @@ import { UserManagerService } from 'src/api-authorization/UserManagerService';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
 import { take } from 'rxjs/operators';
 import { SignalRService } from './services/signalr.service';
+import { TitleBlinker } from './services/TitleBlinker';
+import { PlayChatSound } from './services/PlayChatSound';
 
 
 export async function initUserManager(userMgrService: UserManagerService): Promise<UserManager> {
@@ -53,6 +55,9 @@ export async function initUserManager(userMgrService: UserManagerService): Promi
   ],
   providers: [
     UserManagerService,
+    Title,
+    TitleBlinker,
+    PlayChatSound,
     { provide: HTTP_INTERCEPTORS, useClass: AuthorizeInterceptor, multi: true },
     { provide: 'USER_MANAGER', useFactory: initUserManager, deps: [UserManagerService], multi: false },
     { provide: 'AUTH_SERVICE', useClass: AuthorizeService, multi: false },

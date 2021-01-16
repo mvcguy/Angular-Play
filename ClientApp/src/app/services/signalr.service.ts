@@ -1,5 +1,5 @@
 import { EventEmitter, Inject, Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions } from '@aspnet/signalr';
+import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions } from '@microsoft/signalr';
 import { Subscription } from 'rxjs';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
 import { ChatMessage } from '../common/ChatMessage';
@@ -60,6 +60,7 @@ export class SignalRService {
     try {
       this.signalRHub = new HubConnectionBuilder()
         .withUrl(this.apiUrl + '/chathub', options)
+        .withAutomaticReconnect()
         .build();
     } catch (error) {
 

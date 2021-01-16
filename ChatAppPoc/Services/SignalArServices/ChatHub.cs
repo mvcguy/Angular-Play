@@ -45,6 +45,7 @@ namespace ChatAppPoc.Services.SignalArServices
                 || string.IsNullOrWhiteSpace(message.ToUser)
                 )
             {
+
                 logger.LogInformation("Bad request arrived");
                 return;
             }
