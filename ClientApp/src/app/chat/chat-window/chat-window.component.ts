@@ -28,4 +28,16 @@ export class ChatWindowComponent implements OnInit {
     this.chatNotifications.push(chatMessage);
   }
 
+  public onMessageSeen(user: string) {
+    this.chatNotifications.forEach((chatMessage, index) => {
+      if (user === chatMessage.fromUser)
+        chatMessage.seen = true;
+    });
+  }
+
+  public onChatWindowClicked(user: string) {
+    console.log('chat window clicked: ', user);
+    this.onMessageSeen(user);
+  }
+
 }

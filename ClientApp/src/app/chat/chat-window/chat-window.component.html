@@ -8,7 +8,7 @@
   <div>
 
     <app-chat-user-conversation [selectedUser]="selectedUser" [showSelectedUser]="false"
-      (chatMessageArrived)="onChatMessageArrived($event)">
+      (chatMessageArrived)="onChatMessageArrived($event)" (chatInputClicked)="onChatWindowClicked($event)">
 
     </app-chat-user-conversation>
 

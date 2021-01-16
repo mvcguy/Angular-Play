@@ -64,6 +64,7 @@ export class UserListComponent implements OnInit {
     this.selectedUser = user;
     this.userSelected.emit(this.selectedUser);
 
+    // marked the messages are seen
     this.chatNotifications.forEach((chatMessage, index) => {
       if (user === chatMessage.fromUser)
         chatMessage.seen = true;

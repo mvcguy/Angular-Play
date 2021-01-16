@@ -27,7 +27,7 @@
       <div style="visibility: hidden;" id="chat_eof"></div>
     </div>
     <div>
-      <input autocomplete="off" type="text" class="chat-text-box" name="txtNewMessage"
+      <input (click)="onChatInputClicked($event)" autocomplete="off" type="text" class="chat-text-box" name="txtNewMessage"
         [(ngModel)]="currentMessage.message" (keydown.enter)="sendMessage()" />
       <input type="button" value="Send" class="chat-send-btn" (click)="sendMessage()" />
     </div>

@@ -25,16 +25,12 @@ export class UserConversationComponent implements OnInit {
 
     if (value && value != '') {
       this._selectedUser = value;
-
-      //
-      // TODO: How you await the async calls in the setter ?
-      //
       this.RefreshChat();
-      this.subscribeToSignalREvents();
     }
   }
 
   @Output() chatMessageArrived = new EventEmitter<ChatMessage>();
+  @Output() chatInputClicked = new EventEmitter<string>();
 
   public currentMessage: ChatMessage;
   public currentChat: UserChat;
@@ -78,7 +74,7 @@ export class UserConversationComponent implements OnInit {
   }
 
   async subscribeToSignalREvents() {
-    if (!!this.currentUser && this.currentUser.name && this.selectedUser) {
+    if (!!this.currentUser && this.currentUser.name) {
       var subscriptionId = this.currentUser.name;
       this.signalRService
         .subscribeToChatSignals(subscriptionId, (data: SignalRChatModel) => this.onNewChatMessageArrived(data));
@@ -93,14 +89,16 @@ export class UserConversationComponent implements OnInit {
       index: data.props.Index,
       toUser: data.props.ToUser,
       timestamp: data.props.Timestamp,
-      seen:false
+      seen: false
     };
     this.chatMessageArrived.emit(message);
 
-    this.currentChat.chatMessages.push(message);
+    if (this.currentChat.userName === message.fromUser) {
+      this.currentChat.chatMessages.push(message);
+      // console.log("Instance-[%s] - SignalR: Data is received by the component. Data: %o", this.instanceId, message);
+      this.chatIsScrolledToView = false;
+    }
 
-    // console.log("Instance-[%s] - SignalR: Data is received by the component. Data: %o", this.instanceId, message);
-    this.chatIsScrolledToView = false;
   }
 
   ngAfterViewChecked() {
@@ -164,6 +162,7 @@ export class UserConversationComponent implements OnInit {
 
     // re-new current  message
     this.currentMessage = new ChatMessage();
+    this.chatInputClicked.emit(this.selectedUser);
   }
   OnSendMessageError(error: any): void {
     console.log(error);
@@ -175,6 +174,11 @@ export class UserConversationComponent implements OnInit {
   scrollChatToView() {
     document.getElementById('chat_eof').scrollIntoView();
     this.chatIsScrolledToView = true;
+  }
+
+  onChatInputClicked(event: any) {
+    // console.log('chat input is clicked %o', event);
+    this.chatInputClicked.emit(this.selectedUser);
   }
 }
 
