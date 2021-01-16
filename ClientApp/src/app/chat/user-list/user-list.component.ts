@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, EventEmitter, Inject, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
+import { ChatMessage } from '../UserConversation/ChatMessage';
 import { ChatUserModel } from '../UserSearch/user.search.component';
 
 @Component({
@@ -12,14 +13,22 @@ export class UserListComponent implements OnInit {
 
   @Output() userSelected = new EventEmitter<string>();
 
+  private _chatNotifications: ChatMessage[] = [];
+
+  @Input()
+  get chatNotifications(): ChatMessage[] { return this._chatNotifications; }
+  set chatNotifications(value: ChatMessage[]) {
+    this._chatNotifications = value;
+    console.log('chat messages: %o', value);
+  }
+
   topUsers: ChatUserModel[];
   selectedUser: string;
 
   constructor(private http: HttpClient
     , @Inject('API_URL') private apiUrl: string
-    , @Inject('AUTH_SERVICE') private authService: AuthorizeService
-
-  ) {
+    , @Inject('AUTH_SERVICE') private authService: AuthorizeService) {
+    this.chatNotifications = [];
   }
   async ngOnInit() {
 
@@ -34,7 +43,7 @@ export class UserListComponent implements OnInit {
   }
 
   private onUserAuthorized(user: IUser, source: string) {
-    var isAuthenticated = !!user;
+    var isAuthenticated = !!user && user.name !== undefined;
     if (isAuthenticated && !this.topUsers) {
       this.http.get<ChatUserModel[]>(this.apiUrl + '/chat/userlist')
         .subscribe(
@@ -54,5 +63,21 @@ export class UserListComponent implements OnInit {
   public updateUser(user: string) {
     this.selectedUser = user;
     this.userSelected.emit(this.selectedUser);
+
+    this.chatNotifications.forEach((chatMessage, index) => {
+      if (user === chatMessage.fromUser)
+        chatMessage.seen = true;
+    });
+  }
+
+  public getMessageCount(user: string): number {
+    var filtered = this.chatNotifications
+      .filter((chatMessage, index) => chatMessage.fromUser === user && chatMessage.seen === false);
+    return filtered.length;
+  }
+
+  public showPendingMessage(user: string): boolean {
+    var index = this.chatNotifications.findIndex(({ fromUser, seen }) => fromUser == user && seen === false);
+    return index >= 0;
   }
 }

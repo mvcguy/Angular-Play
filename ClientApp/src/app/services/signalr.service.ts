@@ -11,7 +11,7 @@ export class SignalRService {
 
   private signalRHub: HubConnection
   public signalEmitter: EventEmitter<SignalRChatModel>;
-  public subscriptions: SubscriptionItem[];
+  public subscriptions: ChatSubscriptionItem[];
 
   constructor(@Inject('API_URL') private apiUrl: string
     , @Inject('AUTH_SERVICE') private authService: AuthorizeService
@@ -67,29 +67,37 @@ export class SignalRService {
 
   subscribeToChatSignals(userName: string, newMethod: (...args: any[]) => void) {
     // TODO: use more secure way!
-    // debugger;
+    //  debugger;
     var index = this.subscriptions.findIndex(({ key }) => key === userName);
     if (index !== -1) {
       // delete the existing subscription
-      var existingSub = this.subscriptions.splice(index, 1)[0];
-      existingSub.subscription.unsubscribe();
+      this.subscriptions.splice(index, 1)[0];
+      // console.log('existing subscription removed');
     };
 
     // TODO: add callback for errors and complete
-    var sub = this.signalEmitter.subscribe(newMethod);
-    this.subscriptions.push({ key: userName, subscription: sub });
+    this.subscriptions.push({ key: userName, subscription: newMethod });
     // remove the handler if exist from before
     this.signalRHub.off(userName);
-
+    // console.log('subscription list: ', this.subscriptions);
     // register the handler
     this.signalRHub.on(userName, (data: SignalRChatModel) => {
-      console.log("SignalR: Signal received from server. Data: ", data);
-      this.signalEmitter.emit(data);
+      // console.log("SignalR: Signal received from server. TargetUser: %s Data: %o", userName, data);
+      var index = this.subscriptions.findIndex(({ key }) => key === data.props.ToUser);
+      if (index !== -1) {
+        var item = this.subscriptions[index];
+        item.subscription(data)
+      }
     });
   }
 }
 
-export class SubscriptionItem {
+export class ChatSubscriptionItem {
+  key: string;
+  subscription: (...args: any[]) => void
+}
+
+export class AuthSubscriptionItem{
   key: string;
   subscription: Subscription
 }

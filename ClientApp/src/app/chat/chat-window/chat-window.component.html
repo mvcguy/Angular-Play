@@ -1,13 +1,14 @@
 <div class="chat-plugin">
 
   <div style="width: 100%;">
-    <app-user-list (userSelected)="onUserSelected($event)">
+    <app-user-list (userSelected)="onUserSelected($event)" [chatNotifications]="chatNotifications">
 
     </app-user-list>
   </div>
   <div>
 
-    <app-chat-user-conversation [selectedUser]="selectedUser" [showSelectedUser]="false">
+    <app-chat-user-conversation [selectedUser]="selectedUser" [showSelectedUser]="false"
+      (chatMessageArrived)="onChatMessageArrived($event)">
 
     </app-chat-user-conversation>
 

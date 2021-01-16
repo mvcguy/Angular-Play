@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ChatMessage } from '../UserConversation/ChatMessage';
 
 @Component({
   selector: 'app-chat-window',
@@ -7,16 +8,24 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ChatWindowComponent implements OnInit {
 
-  constructor() { }
+  constructor() {
+    this.chatNotifications = [];
+  }
 
   ngOnInit(): void {
   }
 
   public selectedUser: string;
+  public chatNotifications: ChatMessage[];
 
   public onUserSelected(selectedUserName: string) {
-    console.log('OnUserSelected: ', selectedUserName);
+    // console.log('OnUserSelected: ', selectedUserName);
     this.selectedUser = selectedUserName;
+  }
+
+  public onChatMessageArrived(chatMessage: ChatMessage) {
+    console.log("Message arrived %o", chatMessage);
+    this.chatNotifications.push(chatMessage);
   }
 
 }

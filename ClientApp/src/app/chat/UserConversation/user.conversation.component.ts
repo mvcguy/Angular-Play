@@ -1,11 +1,11 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, Inject, Input, OnInit } from "@angular/core";
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { Observable, of } from "rxjs";
+// import { Observable, of } from "rxjs";
 import { AuthorizeService, IUser } from "src/api-authorization/authorize.service";
 import { SignalRChatModel } from "src/app/services/signalr.chat.model";
 import { SignalRService } from "src/app/services/signalr.service";
-import { ChatMessage } from "./ChatMessage";
+import { ChatMessage, UserChat } from "./ChatMessage";
 
 @Component({
   selector: 'app-chat-user-conversation',
@@ -34,14 +34,16 @@ export class UserConversationComponent implements OnInit {
     }
   }
 
-  public chatHistory: Observable<ChatMessage[]>;
-  public chatHistorySource: ChatMessage[];
+  @Output() chatMessageArrived = new EventEmitter<ChatMessage>();
+
   public currentMessage: ChatMessage;
+  public currentChat: UserChat;
   public messageSeq: number = 1;
   public chatIsScrolledToView: boolean = false;
   public historyFetched: boolean = false;
   public isAuthenticated: boolean = false;
   public currentUser: IUser = null;
+  public instanceId: string = new Date().toUTCString();
 
   constructor(@Inject('API_URL') private apiUrl: string
     , @Inject('AUTH_SERVICE') private authService: AuthorizeService
@@ -54,13 +56,12 @@ export class UserConversationComponent implements OnInit {
     // not needed anymore
     //
     // this.opponentUserName = this.activatedRoute.snapshot.paramMap.get('userName');
-    this.chatHistorySource = [];
     this.showSelectedUser = true;
     this.selectedUser = '';
+    this.currentChat = { userName: '', chatMessages: [] };
   }
 
   async ngOnInit() {
-    this.chatHistory = of(this.chatHistorySource);
     var user = await this.authService.getUser();
     this.onUserEvent(user, 'promise');
     this.authService.subscribeUserEvents('user-conversation-component', (user: IUser) => {
@@ -70,30 +71,35 @@ export class UserConversationComponent implements OnInit {
 
   private onUserEvent(user: IUser, source: string) {
     this.currentUser = user;
-    this.isAuthenticated = !!user;
-    console.log('user-conversation-comp: userevent source: %s, Event-Payload: %o', source, user);
+    this.isAuthenticated = !!user && user.name !== undefined;
+    // console.log('user-conversation-comp: userevent source: %s, Event-Payload: %o', source, user);
     this.RefreshChat();
     this.subscribeToSignalREvents();
   }
 
   async subscribeToSignalREvents() {
     if (!!this.currentUser && this.currentUser.name && this.selectedUser) {
-      var subscriptionId = this.currentUser.name + this.selectedUser;
+      var subscriptionId = this.currentUser.name;
       this.signalRService
         .subscribeToChatSignals(subscriptionId, (data: SignalRChatModel) => this.onNewChatMessageArrived(data));
     }
   }
 
   onNewChatMessageArrived(data: SignalRChatModel) {
+
     var message: ChatMessage = {
       message: data.body,
       fromUser: data.props.FromUser,
       index: data.props.Index,
       toUser: data.props.ToUser,
-      timestamp: data.props.Timestamp
+      timestamp: data.props.Timestamp,
+      seen:false
     };
-    this.chatHistorySource.push(message);
-    console.log("SignalR: Data is received by the component. Data: ", message);
+    this.chatMessageArrived.emit(message);
+
+    this.currentChat.chatMessages.push(message);
+
+    // console.log("Instance-[%s] - SignalR: Data is received by the component. Data: %o", this.instanceId, message);
     this.chatIsScrolledToView = false;
   }
 
@@ -112,7 +118,7 @@ export class UserConversationComponent implements OnInit {
   private async GetChatHistory() {
 
     var user = this.currentUser && this.currentUser.name;
-    console.log('GetHistory: CurrentUser: ' + user + ', OppUser: ' + this.selectedUser);
+    // console.log('GetHistory: CurrentUser: ' + user + ', OppUser: ' + this.selectedUser);
 
     if (user && this.selectedUser && !this.historyFetched) {
       this.historyFetched = true;
@@ -130,23 +136,24 @@ export class UserConversationComponent implements OnInit {
   }
   OnChatHistoryReceived(result: ChatMessage[]): void {
 
-    //
-    // TODO: only append new history items
-    //
+    if (this.selectedUser === '') return;
 
-    // this.chatHistorySource = [...this.chatHistorySource, ...result];
-    this.chatHistorySource = [...result];
-    this.chatHistory = of(this.chatHistorySource);
+    this.currentChat = { userName: this.selectedUser, chatMessages: [...result] };
     this.chatIsScrolledToView = false;
   }
 
   public async sendMessage() {
-    this.currentMessage.fromUser = (await this.authService.getUser())?.name;
+
+    if (!this.isAuthenticated || this.selectedUser === '' || this.selectedUser === undefined || this.selectedUser === null) {
+      return;
+    }
+
+    this.currentMessage.fromUser = this.currentUser.name;
     this.currentMessage.index = this.messageSeq++;
     this.currentMessage.timestamp = new Date().toLocaleTimeString();
     this.currentMessage.toUser = this.selectedUser;
 
-    this.chatHistorySource.push(this.currentMessage);
+    this.currentChat.chatMessages.push(this.currentMessage);
     this.chatIsScrolledToView = false;
 
     this.http.post(this.apiUrl + '/chat/sendmessage', this.currentMessage)

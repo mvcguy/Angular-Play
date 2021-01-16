@@ -11,7 +11,8 @@
   <div>
     <div class="chat-history" id="chatHistory">
       <ul class="list-group">
-        <li class="list-group-item chat-list-item" *ngFor="let item of chatHistory | async" id="item-{{item.index}}">
+        <li class="list-group-item chat-list-item" *ngFor="let item of currentChat.chatMessages"
+          id="item-{{item.index}}">
           <div [ngClass]="(item.fromUser=== currentUser?.name)?'chat-item-right':'chat-item-left'">
             <div>
               <span class="chat-user-name">{{ item.fromUser }} </span>

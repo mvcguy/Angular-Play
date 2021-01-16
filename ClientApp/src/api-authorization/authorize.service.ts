@@ -1,6 +1,6 @@
 import { Inject, Injectable, EventEmitter } from '@angular/core';
 import { User, UserManager } from 'oidc-client';
-import { SubscriptionItem } from 'src/app/services/signalr.service';
+import { AuthSubscriptionItem } from 'src/app/services/signalr.service';
 // import { BehaviorSubject, concat, from, Observable, pipe } from 'rxjs';
 // import { filter, map, mergeMap, take, tap } from 'rxjs/operators';
 
@@ -44,7 +44,7 @@ export class AuthorizeService {
 
   private userEvents: EventEmitter<IUser> = new EventEmitter<IUser>();
 
-  public subscriptions: SubscriptionItem[] = [];
+  public subscriptions: AuthSubscriptionItem[] = [];
   // By default pop ups are disabled because they don't work properly on Edge.
   // If you want to enable pop up authentication simply set this flag to false.
   private popUpDisabled = true;

@@ -54,7 +54,7 @@ export class UserManagerService {
   }
 
   private getWebStorageStateStore(): WebStorageStateStore {
-    return new WebStorageStateStore({ store: window.localStorage });
+    return new WebStorageStateStore({ store: window.sessionStorage });
   }
 
 }

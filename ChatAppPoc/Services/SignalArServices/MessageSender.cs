@@ -16,7 +16,7 @@ namespace ChatAppPoc.Services.SignalArServices
         {
             var from = message.Props["FromUser"] as string;
             var to = message.Props["ToUser"] as string;
-            await hubContext.Clients.All.SendAsync(to + from, message);
+            await hubContext.Clients.All.SendAsync(to, message);
         }
     }
 }

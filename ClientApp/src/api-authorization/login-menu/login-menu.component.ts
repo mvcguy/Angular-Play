@@ -26,8 +26,8 @@ export class LoginMenuComponent implements OnInit {
   private onUserEvent(user: IUser, source: string) {
     // debugger;
     this.userName = user && user.name;
-    this.isAuthenticated = !!user;
-    console.log('login-menu-comp: login-source: ', source);
+    this.isAuthenticated = !!user && user.name !== undefined;
+    // console.log('login-menu-comp: login-source: %s, Payload: %o', source, user);
   }
 
   public userName: string;
