@@ -7,29 +7,26 @@
   <span class="error">You must login to continue using the chat !</span>
 </div>
 
-<div class="chat-window">
-  <div>
-    <div class="chat-history" id="chatHistory">
-      <ul class="list-group">
-        <li class="list-group-item chat-list-item" *ngFor="let item of currentChat.chatMessages"
-          id="item-{{item.index}}">
-          <div [ngClass]="(item.fromUser === currentUser?.name)?'chat-item-right':'chat-item-left'">
-            <div>
-              <span class="chat-user-name">{{ item.fromUser === currentUser?.name ? 'You' : item.fromUser }} </span>
-              <span class="chat-time-stamp">{{ item.timestamp }}</span>
-            </div>
-            <div class="chat-message">
-              {{ item.message }}
-            </div>
+<div>
+  <div class="chat-history" id="chat_history">
+    <ul class="list-group">
+      <li class="list-group-item chat-list-item" *ngFor="let item of currentChat.chatMessages" id="item-{{item.index}}">
+        <div [ngClass]="(item.fromUser === currentUser?.name)?'chat-item-right':'chat-item-left'">
+          <div>
+            <span class="chat-user-name">{{ item.fromUser === currentUser?.name ? 'You' : item.fromUser }} </span>
+            <span class="chat-time-stamp">{{ item.timestamp }}</span>
           </div>
-        </li>
-      </ul>
-      <div style="visibility: hidden;" id="chat_eof"></div>
-    </div>
-    <div>
-      <input (click)="onChatInputClicked($event)" autocomplete="off" type="text" class="chat-text-box" name="txtNewMessage"
-        [(ngModel)]="currentMessage.message" (keydown.enter)="sendMessage()" />
-      <input type="button" value="Send" class="chat-send-btn" (click)="sendMessage()" />
-    </div>
+          <div class="chat-message">
+            {{ item.message }}
+          </div>
+        </div>
+      </li>
+      <li style="visibility: hidden;" id="chat_eof"></li>
+    </ul>
+  </div>
+  <div>
+    <input (click)="onChatInputClicked($event)" autocomplete="off" type="text" class="chat-text-box"
+      name="txtNewMessage" [(ngModel)]="currentMessage.message" (keydown.enter)="sendMessage()" />
+    <input type="button" value="Send" class="chat-send-btn" (click)="sendMessage()" />
   </div>
 </div>

@@ -77,11 +77,6 @@ namespace ChatAppPoc
 
         }
 
-        private SigningCredentials CreateSigningCredentials()
-        {
-            return new SigningCredentials(FakeKeyStore.Key, SecurityAlgorithms.RsaSha512);
-        }
-
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -215,6 +210,12 @@ namespace ChatAppPoc
                 .AllowAnyHeader();
             };
         }
+
+        private SigningCredentials CreateSigningCredentials()
+        {
+            return new SigningCredentials(FakeKeyStore.Key, SecurityAlgorithms.RsaSha512);
+        }
+
 
     }
 }

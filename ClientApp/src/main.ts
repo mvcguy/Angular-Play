@@ -9,8 +9,9 @@ export function getBaseUrl() {
 }
 
 export function getApiUrl() {
-  return 'https://localhost/chatpoc';
-  //  return 'https://chatapppoc.azurewebsites.net';
+  //  return 'https://localhost/chatpoc';
+  // return 'https://chatapppoc.azurewebsites.net';
+  return "https://192.168.137.120/chatpoc";
 }
 
 

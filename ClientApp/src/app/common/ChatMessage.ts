@@ -8,6 +8,12 @@ export class ChatMessage {
   seen: boolean;
 }
 
+export class AudioMessage {
+  fromUser?: string;
+  toUser?: string;
+  pcmStream: number[];
+}
+
 export class UserChat {
   userName: string
   chatMessages: ChatMessage[]

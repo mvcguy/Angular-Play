@@ -51,7 +51,6 @@ namespace ChatAppPoc.Services.SignalArServices
             }
 
             await repository.SaveMessage(message);
-
             await messageSender.SendMessage(message.ToPublicMessage());
 
             logger.LogInformation("Request is processed Ok");
@@ -62,5 +61,27 @@ namespace ChatAppPoc.Services.SignalArServices
             await repository.MarkAsSeen(messages);
             logger.LogInformation("Messages are marked as seen.");
         }
+
+        public async Task ForwardAudioStream(ChatStreamVm stream)
+        {
+            var destKey = stream.ToUser + "-audio";
+            await this.Clients.All.SendAsync(destKey, stream);
+        }
+
+    }
+
+    public class ChatStreamVm
+    {
+        public string FromUser { get; set; }
+
+        public string ToUser { get; set; }
+
+        public float[] PcmStream { get; set; }
+    }
+
+    public class StreamItem
+    {
+        public int index { get; set; }
+        public float P { get; set; }
     }
 }

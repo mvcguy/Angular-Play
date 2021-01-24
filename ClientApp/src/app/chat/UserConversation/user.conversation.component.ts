@@ -181,7 +181,7 @@ export class UserConversationComponent implements OnInit {
   }
 
   scrollChatToView() {
-    document.getElementById('chat_eof').scrollIntoView();
+    document.getElementById('chat_eof').scrollIntoView(false);
     this.chatIsScrolledToView = true;
   }
 

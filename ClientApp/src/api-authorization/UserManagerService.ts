@@ -31,8 +31,8 @@ export class UserManagerService {
       //
       // TODO: flaw in the login process in Azure: The logged-in user is removed from the local-storage
       //
-      settings.automaticSilentRenew = true;
-      settings.includeIdTokenInSilentRenew = true;
+      // settings.automaticSilentRenew = true;
+      // settings.includeIdTokenInSilentRenew = true;
       settings.userStore = this.getWebStorageStateStore();
       this._userManager = new UserManager(settings);
 
@@ -41,7 +41,8 @@ export class UserManagerService {
         // TODO: flaw in the login process in Azure: The logged-in user is removed from the local-storage
         // Also there is an infinite loop
         //
-        await this._userManager.removeUser();
+        //await this._userManager.removeUser();
+        console.log('logging out user');
       });
 
     } catch (error) {
@@ -55,6 +56,7 @@ export class UserManagerService {
 
   private getWebStorageStateStore(): WebStorageStateStore {
     return new WebStorageStateStore({ store: window.sessionStorage });
+    // return new WebStorageStateStore({ store: window.localStorage });
   }
 
 }

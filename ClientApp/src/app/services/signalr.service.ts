@@ -2,7 +2,7 @@ import { EventEmitter, Inject, Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions } from '@microsoft/signalr';
 import { Subscription } from 'rxjs';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
-import { ChatMessage } from '../common/ChatMessage';
+import { AudioMessage, ChatMessage } from '../common/ChatMessage';
 import { SignalRChatModel } from '../common/signalr.chat.model';
 
 @Injectable({
@@ -13,6 +13,7 @@ export class SignalRService {
   private signalRHub: HubConnection
   public signalEmitter: EventEmitter<SignalRChatModel>;
   public subscriptions: ChatSubscriptionItem[];
+  public audioSubscriptions: ChatSubscriptionItem[];
 
   constructor(@Inject('API_URL') private apiUrl: string
     , @Inject('AUTH_SERVICE') private authService: AuthorizeService
@@ -28,7 +29,7 @@ export class SignalRService {
 
     this.authService.subscribeUserEvents('signal-r-service', (user: IUser) => { this.setupConnection(user) });
     this.subscriptions = [];
-
+    this.audioSubscriptions = [];
   }
 
   setupConnection(user: IUser) {
@@ -94,6 +95,34 @@ export class SignalRService {
     });
   }
 
+  subscribeToAudioStream(userName: string, newMethod: (...args: any[]) => void) {
+
+    var subKey = userName + '-audio'
+
+    // TODO: use more secure way!
+    //  debugger;
+    var index = this.audioSubscriptions.findIndex(({ key }) => key === subKey);
+    if (index !== -1) {
+      // delete the existing subscription
+      this.audioSubscriptions.splice(index, 1)[0];
+      // console.log('existing subscription removed');
+    };
+
+    this.audioSubscriptions.push({ key: subKey, subscription: newMethod });
+    // remove the handler if exist from before
+    this.signalRHub.off(subKey);
+
+    this.signalRHub.on(subKey, (data: AudioMessage) => {
+
+      //console.log("SignalR: Signal received from server. TargetUser: %s Data: %o", subKey, data);
+      var index = this.audioSubscriptions.findIndex(({ key }) => key === data.toUser+'-audio');
+      if (index !== -1) {
+        var item = this.audioSubscriptions[index];
+        item.subscription(data)
+      }
+    });
+  }
+
   public async sendMessage(chatMessage: ChatMessage): Promise<void> {
     await this.signalRHub.send('SendMessage', chatMessage);
   }
@@ -101,6 +130,14 @@ export class SignalRService {
   public async markMessageAsSeen(messages: ChatMessage[]): Promise<void> {
     await this.signalRHub.send('MarkAsSeen', messages);
     console.log('messages are marked as Seen');
+  }
+
+  public async forwardAudioStream(data:Float32Array, source: string, destination: string): Promise<void> {
+
+    // debugger;
+    await this.signalRHub.send("ForwardAudioStream", { pcmStream:Array.from(data), fromUser: source, toUser: destination });
+    // await this.signalRHub.send("ForwardAudioStream", { pcmStream:data, fromUser: source, toUser: destination });
+
   }
 
 }
