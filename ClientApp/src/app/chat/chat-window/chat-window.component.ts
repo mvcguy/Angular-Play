@@ -1,5 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { ISubscription, Subject } from '@microsoft/signalr';
 import { AuthorizeService } from 'src/api-authorization/authorize.service';
 import { PlayChatSound } from 'src/app/services/PlayChatSound';
 import { SignalRService } from 'src/app/services/signalr.service';
@@ -23,11 +24,7 @@ export class ChatWindowComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.liveAudio.onloadeddata = (event) => {
-
-      console.log('OnLoadedData %o', event);
-    };
-
+    this.audioStreamSubject = new Subject<AudioMessage>();
   }
 
   public selectedUser: string;
@@ -37,6 +34,9 @@ export class ChatWindowComponent implements OnInit {
   scriptProcessor: any;
   audioInput;
   audioContext;
+  audioStreamSubject: Subject<AudioMessage>;
+  streamGenerator;
+  audioCallSubscription: ISubscription<any>;
 
   public onUserSelected(selectedUserName: string) {
     // console.log('OnUserSelected: ', selectedUserName);
@@ -103,8 +103,8 @@ export class ChatWindowComponent implements OnInit {
       this.audioContext = new AudioContext();
       this.audioInput = this.audioContext.createMediaStreamSource(stream);
 
-      // this.scriptProcessor = this.audioContext.createScriptProcessor(8192, 1, 1);
-       this.scriptProcessor = this.audioContext.createScriptProcessor(1024, 1, 1);
+      // this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+      this.scriptProcessor = this.audioContext.createScriptProcessor(1024, 1, 1);
 
 
       // connect stream to our scriptProcessor
@@ -118,10 +118,22 @@ export class ChatWindowComponent implements OnInit {
       this.audioInput.connect(volume);
       volume.connect(this.scriptProcessor);
 
+      this.streamGenerator = this.signalRService.forwardAudioStream2(this.audioStreamSubject);
       this.currentUser = (await this.authService.getUser()).name;
-      this.signalRService.subscribeToAudioStream(this.currentUser, (data: AudioMessage) => {
-        console.log(data);
-      })
+      // this.signalRService.subscribeToAudioStream(this.currentUser, (data: AudioMessage) => {
+      //   console.log(data);
+      // })
+
+      if (this.audioCallSubscription) {
+        this.audioCallSubscription.dispose();
+      }
+
+      // this.audioCallSubscription = this.signalRService
+      //   .subscribeToAudioStream2(this.currentUser, (data: AudioMessage) => {
+      //     console.log(data);
+      //   })
+
+
     } catch (err) {
       console.log('error during media streaming %o', err);
     }
@@ -130,16 +142,25 @@ export class ChatWindowComponent implements OnInit {
   playSound() {
     this.liveAudio.play();
     this.scriptProcessor.onaudioprocess = (e) => {
-      console.log('e.inputBuffer.getChannelData(0)');
+      //console.log(e);
       // this.signalRService.forwardAudioStream(e.inputBuffer.getChannelData(0), this.currentUser, this.selectedUser);
-      this.signalRService.forwardAudioStream(e.inputBuffer.getChannelData(0), this.currentUser, this.selectedUser,);
-
+      var audioSignal: AudioMessage = {
+        fromUser: this.currentUser,
+        toUser: this.selectedUser,
+        pcmStream: Array.from(e.inputBuffer.getChannelData(0))
+      }
+      this.audioStreamSubject.next(audioSignal);
     }
+
+    // call only once?
+    this.streamGenerator.next();
   }
 
   stopSound() {
     this.liveAudio.pause();
     this.scriptProcessor.onaudioprocess = null;
+    this.audioStreamSubject.complete();
+
   }
 
 }

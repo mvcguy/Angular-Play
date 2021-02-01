@@ -3,9 +3,13 @@ using ChatAppPoc.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using SharedServices;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ChatAppPoc.Services.SignalArServices
@@ -68,20 +72,55 @@ namespace ChatAppPoc.Services.SignalArServices
             await this.Clients.All.SendAsync(destKey, stream);
         }
 
+        public async Task ForwardAudioStream2(IAsyncEnumerable<ChatStreamVm> stream)
+        {
+            var destKey = "";
+            await foreach (var item in stream)
+            {
+                destKey = item.ToUser + "-audio";
+
+                //
+                // TODO: need to define/limit max buffer size
+                //
+                var userBuffer = Buffer.GetOrAdd(destKey, new ConcurrentQueue<ChatStreamVm>());
+                userBuffer.Enqueue(item);
+            }
+
+            SaveStream(destKey);
+
+        }
+
+        private void SaveStream(string destKey)
+        {
+            AudioHeader header = new AudioHeader();
+            AudioProcessor.SavePcm(Buffer[destKey], header);
+        }
+
+        public async IAsyncEnumerable<ChatStreamVm> DownloadAudioStream(string user,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+
+            if (!Buffer.TryGetValue(user, out var value)) yield break;
+
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (!value.IsEmpty && value.TryDequeue(out var result))
+                    yield return result;
+                else
+                {
+                    await Task.Delay(1000, cancellationToken);
+                }
+            }
+        }
+
+        private static readonly
+            ConcurrentDictionary<string, ConcurrentQueue<ChatStreamVm>> Buffer =
+             new ConcurrentDictionary<string, ConcurrentQueue<ChatStreamVm>>();
+
     }
 
-    public class ChatStreamVm
-    {
-        public string FromUser { get; set; }
+    
 
-        public string ToUser { get; set; }
-
-        public float[] PcmStream { get; set; }
-    }
-
-    public class StreamItem
-    {
-        public int index { get; set; }
-        public float P { get; set; }
-    }
 }

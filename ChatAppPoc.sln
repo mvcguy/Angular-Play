@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatAppPoc", "ChatAppPoc\ChatAppPoc.csproj", "{42A968E6-BD00-470A-8AB1-EAB2096BFA1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatAppPoc", "ChatAppPoc\ChatAppPoc.csproj", "{42A968E6-BD00-470A-8AB1-EAB2096BFA1A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground", "Playground\Playground.csproj", "{EC3EF6CE-67D5-4F75-B0A5-025C65BC0BE4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedServices", "SharedServices\SharedServices.csproj", "{7610DD65-457F-4386-95D3-AC5200FA7736}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{42A968E6-BD00-470A-8AB1-EAB2096BFA1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42A968E6-BD00-470A-8AB1-EAB2096BFA1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42A968E6-BD00-470A-8AB1-EAB2096BFA1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC3EF6CE-67D5-4F75-B0A5-025C65BC0BE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC3EF6CE-67D5-4F75-B0A5-025C65BC0BE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC3EF6CE-67D5-4F75-B0A5-025C65BC0BE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC3EF6CE-67D5-4F75-B0A5-025C65BC0BE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7610DD65-457F-4386-95D3-AC5200FA7736}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7610DD65-457F-4386-95D3-AC5200FA7736}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7610DD65-457F-4386-95D3-AC5200FA7736}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7610DD65-457F-4386-95D3-AC5200FA7736}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

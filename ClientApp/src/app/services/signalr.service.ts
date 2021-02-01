@@ -1,5 +1,5 @@
 import { EventEmitter, Inject, Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, HubConnectionState, IHttpConnectionOptions, ISubscription, Subject } from '@microsoft/signalr';
 import { Subscription } from 'rxjs';
 import { AuthorizeService, IUser } from 'src/api-authorization/authorize.service';
 import { AudioMessage, ChatMessage } from '../common/ChatMessage';
@@ -115,12 +115,27 @@ export class SignalRService {
     this.signalRHub.on(subKey, (data: AudioMessage) => {
 
       //console.log("SignalR: Signal received from server. TargetUser: %s Data: %o", subKey, data);
-      var index = this.audioSubscriptions.findIndex(({ key }) => key === data.toUser+'-audio');
+      var index = this.audioSubscriptions.findIndex(({ key }) => key === data.toUser + '-audio');
       if (index !== -1) {
         var item = this.audioSubscriptions[index];
         item.subscription(data)
       }
     });
+  }
+
+  public subscribeToAudioStream2(userName: string, newMethod: (...args: any[]) => void): ISubscription<any> {
+    var subscription = this.signalRHub.stream('DownloadAudioStream', userName + "-audio")
+      .subscribe({
+        next: newMethod,
+        complete: () => {
+          console.log("Stream completed");
+        },
+        error: (err) => {
+          console.error('stream has error. Error: %o', err);
+        },
+      });
+
+    return subscription;
   }
 
   public async sendMessage(chatMessage: ChatMessage): Promise<void> {
@@ -132,12 +147,16 @@ export class SignalRService {
     console.log('messages are marked as Seen');
   }
 
-  public async forwardAudioStream(data:Float32Array, source: string, destination: string): Promise<void> {
+  public async forwardAudioStream(data: Float32Array, source: string, destination: string): Promise<void> {
 
     // debugger;
-    await this.signalRHub.send("ForwardAudioStream", { pcmStream:Array.from(data), fromUser: source, toUser: destination });
+    await this.signalRHub.send("ForwardAudioStream", { pcmStream: Array.from(data), fromUser: source, toUser: destination });
     // await this.signalRHub.send("ForwardAudioStream", { pcmStream:data, fromUser: source, toUser: destination });
 
+  }
+
+  public *forwardAudioStream2(subject: Subject<AudioMessage>) {
+    yield this.signalRHub.send("ForwardAudioStream2", subject);
   }
 
 }
