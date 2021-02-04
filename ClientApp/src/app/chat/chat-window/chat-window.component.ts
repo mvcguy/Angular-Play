@@ -96,7 +96,7 @@ export class ChatWindowComponent implements OnInit {
       // audio.srcObject = stream;
       // audio.play();
 
-      this.liveAudio.srcObject = stream;
+      //this.liveAudio.srcObject = stream;
 
       /* use the stream */
 
@@ -115,6 +115,7 @@ export class ChatWindowComponent implements OnInit {
 
       // connect volume
       const volume = this.audioContext.createGain();
+      volume.gain.value = 0.8;
       this.audioInput.connect(volume);
       volume.connect(this.scriptProcessor);
 
@@ -140,7 +141,7 @@ export class ChatWindowComponent implements OnInit {
   }
 
   playSound() {
-    this.liveAudio.play();
+    //this.liveAudio.play();
     this.scriptProcessor.onaudioprocess = (e) => {
       //console.log(e);
       // this.signalRService.forwardAudioStream(e.inputBuffer.getChannelData(0), this.currentUser, this.selectedUser);
@@ -157,7 +158,7 @@ export class ChatWindowComponent implements OnInit {
   }
 
   stopSound() {
-    this.liveAudio.pause();
+    //this.liveAudio.pause();
     this.scriptProcessor.onaudioprocess = null;
     this.audioStreamSubject.complete();
 

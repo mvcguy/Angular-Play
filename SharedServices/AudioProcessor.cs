@@ -21,8 +21,8 @@ namespace SharedServices
             float[] in_data_l = null;
             float[] in_data_r = null;
 
-            //GetWaveData(@"C:\temp\a2002011001-e02.wav", out waveheader, out wavedata, out sampleRate, out in_data_l, out in_data_r);
-            GetWaveData(@"C:\temp\x.wav", out waveheader, out wavedata, out sampleRate, out in_data_l, out in_data_r);
+            //GetWaveData(@"mov01.wav", out waveheader, out wavedata, out sampleRate, out in_data_l, out in_data_r);
+            GetWaveData(@"mov01_converted_04.wav", out waveheader, out wavedata, out sampleRate, out in_data_l, out in_data_r);
 
             //
             // Apply Pitch Shifting
@@ -64,7 +64,7 @@ namespace SharedServices
 
             // Save modified wavedata
 
-            string targetFilePath = "sound_low.wav";
+            string targetFilePath = @"converted_04_back.wav";
             if (File.Exists(targetFilePath))
                 File.Delete(targetFilePath);
 
@@ -173,28 +173,51 @@ namespace SharedServices
             }
         }
 
+        public static void GetWaveDataV2(float[] left, ref byte[] data)
+        {
+            Array.Clear(data, 0, data.Length);
+            float k = int.MaxValue / left.Select(x => Math.Abs(x)).Max();
+
+            using var binaryWriter = new BinaryWriter(new MemoryStream(data));
+            foreach (var item in left)
+            {
+                binaryWriter.Write(ToBinary(item, k));
+            }
+
+        }
+
         // Convert two bytes to one double in the range -1 to 1
-        static float BytesToNormalized_16(byte firstByte, byte secondByte)
+        public static float BytesToNormalized_16(byte firstByte, byte secondByte)
         {
             // convert two bytes to one short (little endian)
             short s = (short)(secondByte << 8 | firstByte);
             // convert to range from -1 to (just below) 1
             return s / 32678f;
         }
-
+        
         // Convert a float value into two bytes (use k as conversion value and not Int16.MaxValue to avoid peaks)
-        static void NormalizedToBytes_16(float value, float k, out byte firstByte, out byte secondByte)
+        public static void NormalizedToBytes_16(float value, float k, out byte firstByte, out byte secondByte)
         {
             short s = (short)(value * k);
             firstByte = (byte)(s & 0x00FF);
             secondByte = (byte)(s >> 8);
         }
 
-        public static void SavePcm(ConcurrentQueue<ChatStreamVm> concurrentQueues, AudioHeader header)
+        public static float ToFloat(byte[] value, int index, float k)
         {
+            var s = BitConverter.ToInt32(value, index);
+            return s / k;
+        }
 
+        public static byte[] ToBinary(float value, float k)
+        {
+            int s = (int)(value * k);
+            var bytes = BitConverter.GetBytes(s);
+            return bytes;
+        }
 
-            
+        public static void SavePcm(ConcurrentQueue<ChatStreamVm> concurrentQueues, AudioHeader header)
+        {            
             var floats = new List<float>();
 
             while (!concurrentQueues.IsEmpty)
@@ -203,21 +226,16 @@ namespace SharedServices
                     floats.AddRange(result.PcmStream);
             }
 
-            var size = floats.Count() * 2;
+            ushort bytesPerSample = 4;
+
+            var size = floats.Count() * bytesPerSample;
             uint numsamples = (uint)floats.Count();
 
-            byte[] rawData1 = new byte[size];
+            byte[] waveData = new byte[size];
 
-            GetWaveData(floats.ToArray(), null, ref rawData1);
+            GetWaveData(floats.ToArray(), null, ref waveData);
 
-            //byte[] byte_array = new byte[rawData1.Length * 2];
-            //for (int i = 0; i < rawData1.Length; ++i)
-            //{
-            //    //byte_array[2 * i] = getByte1(rawData1[i]);
-            //    //byte_array[2 * i + 1] = getByte2(rawData1[i]);
-            //    byte_array[2 * i] = getByte2(rawData1[i]);
-            //    byte_array[2 * i + 1] = getByte1(rawData1[i]);
-            //}
+            GetWaveDataV2(floats.ToArray(), ref waveData);
 
             var fileName = $"{Guid.NewGuid()}.wav";
 
@@ -226,7 +244,7 @@ namespace SharedServices
             var wr = new BinaryWriter(file);
 
 
-            ushort bitsPerSample = 16;
+            ushort bitsPerSample = (ushort)(bytesPerSample * 8);
             char[] chunkId = "RIFF".ToCharArray();
 
             char[] format = "WAVE".ToCharArray();
@@ -235,10 +253,10 @@ namespace SharedServices
             ushort audioFormat = 1;
             ushort numchannels = 1;
             uint samplerate = header.SampleRate;
-            uint byteRate = (ushort)(samplerate * numchannels * (bitsPerSample / 8));
-            ushort blockAlign = (ushort)(numchannels * (bitsPerSample / 8));
+            uint byteRate = samplerate * numchannels * bytesPerSample;
+            ushort blockAlign = (ushort)(numchannels * bytesPerSample);
             char[] subChunk2Id = "data".ToCharArray();
-            uint subChunk2Size = (uint)(numsamples * numchannels * (bitsPerSample / 8));
+            uint subChunk2Size = numsamples * numchannels * bytesPerSample;
             uint chunkSize = 36 + subChunk2Size;
 
             wr.Write(chunkId);          // 4 - offset: 0
@@ -254,23 +272,12 @@ namespace SharedServices
             wr.Write(bitsPerSample);    // 2 : 34
             wr.Write(subChunk2Id);      // 4 : 36
             wr.Write(subChunk2Size);    // 4 : 40
-            wr.Write(rawData1);         // * : 44
+            wr.Write(waveData);         // * : 44
             wr.Dispose();
             file.Dispose();
 
-            var dt = File.ReadAllBytes(fileName);
+            //var dt = File.ReadAllBytes(fileName);
 
-        }
-
-        public static byte getByte1(short s)
-        {
-            return (byte)s;
-        }
-
-        public static byte getByte2(short s)
-        {
-            int temp = s >> 8;
-            return (byte)temp;
         }
 
     }
